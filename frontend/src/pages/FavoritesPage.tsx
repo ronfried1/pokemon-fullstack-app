@@ -28,7 +28,9 @@ const FavoritesPage: React.FC = () => {
             <span className="ml-2 text-gray-500">({favorites.length})</span>
           )}
         </h1>
-        <SearchBar />
+        <div className="flex-grow">
+          <SearchBar />
+        </div>
       </div>
 
       {favorites.length === 0 ? (

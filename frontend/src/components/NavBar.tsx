@@ -15,8 +15,8 @@ const NavBar: React.FC = () => {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 ${
-                  isActive ? "bg-gray-100" : ""
+                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isActive ? "bg-gray-100 dark:bg-gray-700 dark:text-white" : ""
                 }`
               }
               end
@@ -26,8 +26,8 @@ const NavBar: React.FC = () => {
             <NavLink
               to="/favorites"
               className={({ isActive }) =>
-                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 ${
-                  isActive ? "bg-gray-100" : ""
+                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isActive ? "bg-gray-100 dark:bg-gray-700 dark:text-white" : ""
                 }`
               }
             >

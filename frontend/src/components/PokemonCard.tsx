@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Pokemon } from "../types/pokemon";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { selectPokemon } from "../store/pokemonSlice";
+import { selectPokemon, fetchPokemonDetails } from "../store/pokemonSlice";
 import { addFavorite, removeFavorite } from "../store/favoritesSlice";
 
 interface PokemonCardProps {
@@ -33,35 +33,27 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onSelect }) => {
   };
 
   const handleClick = () => {
-    dispatch(selectPokemon(pokemon));
+    // Fetch pokemon details when card is clicked
+    dispatch(fetchPokemonDetails(pokemon._id));
     onSelect();
   };
 
-  // Helper to get badge color based on Pokemon type
-  const getTypeColor = (type: string) => {
-    const typeColors: Record<string, string> = {
-      fire: "bg-red-500",
-      water: "bg-blue-500",
-      grass: "bg-green-500",
-      electric: "bg-yellow-500",
-      psychic: "bg-purple-500",
-      poison: "bg-purple-700",
-      bug: "bg-lime-600",
-      flying: "bg-sky-300",
-      fighting: "bg-orange-700",
-      rock: "bg-stone-600",
-      ground: "bg-amber-700",
-      ghost: "bg-indigo-600",
-      ice: "bg-cyan-400",
-      dragon: "bg-indigo-700",
-      normal: "bg-gray-400",
-      fairy: "bg-pink-400",
-      steel: "bg-slate-400",
-      dark: "bg-gray-800",
-    };
-
-    return `${typeColors[type.toLowerCase()] || "bg-gray-400"} text-white`;
+  // Extract Pokemon ID from URL for image
+  const extractPokemonId = (url: string): string => {
+    const urlParts = url.split("/");
+    // Find the ID in the URL, which is typically the second-to-last segment
+    for (let i = urlParts.length - 2; i >= 0; i--) {
+      const id = parseInt(urlParts[i]);
+      if (!isNaN(id)) {
+        return id.toString();
+      }
+    }
+    return "1"; // Default fallback
   };
+
+  const pokemonId = extractPokemonId(pokemon.url);
+  const dreamWorldImageUrl = `https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/other/dream-world/${pokemonId}.svg`;
+  const fallbackImageUrl = `https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/${pokemonId}.png`;
 
   return (
     <Card
@@ -70,30 +62,36 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onSelect }) => {
     >
       <CardHeader className="relative pb-0">
         <CardTitle className="capitalize">{pokemon.name}</CardTitle>
-        {isFavorite && (
+        {pokemon.isFav && (
           <div className="absolute right-4 top-4">
             <Badge variant="success">Favorite</Badge>
+          </div>
+        )}
+        {pokemon.isViewed && (
+          <div className="absolute right-4 bottom-0">
+            <Badge variant="outline" className="bg-blue-100">
+              Viewed
+            </Badge>
           </div>
         )}
       </CardHeader>
       <CardContent className="pt-4">
         <div className="flex justify-center">
           <img
-            src={pokemon.sprites.front}
+            src={dreamWorldImageUrl}
             alt={pokemon.name}
             className="h-32 w-32"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              // Fallback to regular sprite if dream world fails
+              e.currentTarget.src = fallbackImageUrl;
+            }}
+            loading="lazy"
           />
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {pokemon.types.map((type) => (
-            <Badge key={type} className={getTypeColor(type)}>
-              {type}
-            </Badge>
-          ))}
         </div>
       </CardContent>
       <CardFooter className="justify-between">
-        <Button onClick={onSelect} variant="secondary" size="sm">
+        <Button onClick={handleClick} variant="secondary" size="sm">
           View Details
         </Button>
         <Button

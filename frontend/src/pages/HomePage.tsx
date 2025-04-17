@@ -13,6 +13,7 @@ const HomePage: React.FC = () => {
   const searchQuery = useAppSelector((state) => state.pokemon.searchQuery);
 
   useEffect(() => {
+    console.log("HomePage useEffect");
     if (status === "idle") {
       dispatch(fetchAllPokemon());
       dispatch(fetchFavorites());
@@ -40,14 +41,17 @@ const HomePage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="mb-4 text-2xl font-bold">All Pokémon</h1>
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-          <SearchBar />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-grow">
+            <SearchBar />
+          </div>
           <div className="flex space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleShowAll}
               disabled={!searchQuery && favorites.length === 0}
+              className="h-10"
             >
               Show All
             </Button>
@@ -56,6 +60,7 @@ const HomePage: React.FC = () => {
               size="sm"
               onClick={handleShowFavorites}
               disabled={favorites.length === 0}
+              className="h-10"
             >
               Show Favorites ({favorites.length})
             </Button>

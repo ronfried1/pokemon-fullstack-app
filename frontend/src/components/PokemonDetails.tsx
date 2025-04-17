@@ -15,15 +15,16 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   const pokemon = useAppSelector((state) => state.pokemon.selectedPokemon);
   const favorites = useAppSelector((state) => state.favorites.list);
 
-  if (!pokemon) return null;
+  if (!pokemon || !pokemon.details) return null;
 
-  const isFavorite = favorites.includes(pokemon.name);
+  const { details } = pokemon;
+  const isFavorite = favorites.includes(details.name);
 
   const handleToggleFavorite = () => {
     if (isFavorite) {
-      dispatch(removeFavorite(pokemon.name));
+      dispatch(removeFavorite(details.name));
     } else {
-      dispatch(addFavorite(pokemon.name));
+      dispatch(addFavorite(details.name));
     }
   };
 
@@ -58,7 +59,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
       <div className="relative">
         <DialogClose onClick={onClose} />
         <DialogTitle className="pr-8 text-2xl capitalize">
-          {pokemon.name}
+          {details.name}
           {isFavorite && (
             <Badge variant="success" className="ml-2">
               Favorite
@@ -70,12 +71,12 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
           <div className="flex flex-col items-center gap-6 sm:flex-row">
             <div className="flex flex-col items-center">
               <img
-                src={pokemon.sprites.front}
-                alt={pokemon.name}
+                src={details.sprites.front}
+                alt={details.name}
                 className="h-36 w-36"
               />
               <div className="mt-2 flex flex-wrap justify-center gap-1">
-                {pokemon.types.map((type) => (
+                {details.types.map((type) => (
                   <Badge key={type} className={getTypeColor(type)}>
                     {type}
                   </Badge>
@@ -86,14 +87,14 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
             <div className="flex-1">
               <div className="mb-4">
                 <h3 className="mb-2 font-semibold">Info</h3>
-                <p>Height: {pokemon.height / 10}m</p>
-                <p>Weight: {pokemon.weight / 10}kg</p>
+                <p>Height: {details.height / 10}m</p>
+                <p>Weight: {details.weight / 10}kg</p>
               </div>
 
               <div className="mb-4">
                 <h3 className="mb-2 font-semibold">Abilities</h3>
                 <ul className="list-inside list-disc">
-                  {pokemon.abilities.map((ability) => (
+                  {details.abilities.map((ability) => (
                     <li key={ability} className="capitalize">
                       {ability}
                     </li>
@@ -104,20 +105,20 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <div className="mb-4">
                 <h3 className="mb-2 font-semibold">Stats</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <p>HP: {pokemon.stats.hp}</p>
-                  <p>Attack: {pokemon.stats.attack}</p>
-                  <p>Defense: {pokemon.stats.defense}</p>
-                  <p>Speed: {pokemon.stats.speed}</p>
+                  <p>HP: {details.stats.hp}</p>
+                  <p>Attack: {details.stats.attack}</p>
+                  <p>Defense: {details.stats.defense}</p>
+                  <p>Speed: {details.stats.speed}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {pokemon.evolutions && pokemon.evolutions.length > 0 && (
+          {details.evolutions && details.evolutions.length > 0 && (
             <div className="mt-6">
               <h3 className="mb-2 font-semibold">Evolutions</h3>
               <div className="flex flex-wrap justify-center gap-4">
-                {pokemon.evolutions.map((evolution) => (
+                {details.evolutions.map((evolution) => (
                   <div
                     key={evolution.id}
                     className="flex flex-col items-center"

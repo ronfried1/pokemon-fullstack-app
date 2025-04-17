@@ -12,4 +12,44 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  
+  .dark {
+    --bg-main: #121212;
+    --bg-card: #1e1e1e;
+    --text-primary: #f5f5f5;
+    --text-secondary: #a0a0a0;
+    --border-color: #333;
+  }
+  
+  .dark body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+  }
+  
+  .dark main {
+    background-color: var(--bg-main) !important;
+  }
+  
+  .dark header, .dark footer {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+  }
+  
+  .dark input, .dark button {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+  
+  .dark .bg-white, .dark .bg-gray-50 {
+    background-color: var(--bg-card) !important;
+  }
+  
+  .dark .text-gray-500 {
+    color: var(--text-secondary) !important;
+  }
+  
+  .dark .border {
+    border-color: var(--border-color) !important;
+  }
 }

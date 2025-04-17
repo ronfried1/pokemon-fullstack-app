@@ -9,6 +9,7 @@ const SearchBar: React.FC = () => {
   const searchQuery = useAppSelector((state) => state.pokemon.searchQuery);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("this is the search query", e.target.value);
     dispatch(setSearchQuery(e.target.value));
   };
 
@@ -17,13 +18,13 @@ const SearchBar: React.FC = () => {
   };
 
   return (
-    <div className="relative mb-6">
+    <div className="relative w-full">
       <Input
         type="text"
         placeholder="Search Pokémon by name or type..."
         value={searchQuery}
         onChange={handleChange}
-        className="pr-24"
+        className="pr-24 w-full"
       />
       {searchQuery && (
         <Button
