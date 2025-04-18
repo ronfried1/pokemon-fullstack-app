@@ -12,7 +12,7 @@ const initialState: PokemonState = {
   searchQuery: "",
   page: 1,
   hasMore: true,
-  limit: 20,
+  limit: 15,
   totalCount: 0,
 };
 

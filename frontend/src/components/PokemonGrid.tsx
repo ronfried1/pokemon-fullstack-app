@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 // import PokemonCard from "./PokemonCard";
 import { PokemonCard } from "./pokemon-card";
 import PokemonDetails from "./PokemonDetails";
 import { loadMorePokemon } from "../store/pokemonSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 const PokemonGrid: React.FC = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -12,8 +13,12 @@ const PokemonGrid: React.FC = () => {
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
+
+  // Using react-intersection-observer hook
+  const { ref: loadingRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: "100px",
+  });
 
   useEffect(() => {
     console.log("Pokemon state changed:", {
@@ -23,6 +28,20 @@ const PokemonGrid: React.FC = () => {
     });
   }, [filteredList.length, status, hasMore]);
 
+  // Load more pokemon when the loading element comes into view
+  useEffect(() => {
+    if (inView && status !== "loading" && hasMore) {
+      console.log("Loading more Pokemon...");
+      dispatch(loadMorePokemon());
+    } else if (inView) {
+      console.log("Not loading more:", {
+        inView,
+        status,
+        hasMore,
+      });
+    }
+  }, [inView, dispatch, status, hasMore]);
+
   const openDetails = () => {
     setIsDetailsOpen(true);
   };
@@ -30,67 +49,6 @@ const PokemonGrid: React.FC = () => {
   const closeDetails = () => {
     setIsDetailsOpen(false);
   };
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      console.log("this is the entries", entries);
-      const [entry] = entries;
-      if (entry.isIntersecting && status !== "loading" && hasMore) {
-        console.log("Loading more Pokemon...");
-        dispatch(loadMorePokemon());
-      } else {
-        console.log("Not loading more:", {
-          isIntersecting: entry.isIntersecting,
-          status,
-          hasMore,
-        });
-      }
-    },
-    [dispatch, status, hasMore]
-  );
-
-  useEffect(() => {
-    console.log("Setting up observer effect, hasMore:", hasMore);
-
-    // Always clean up previous observer
-    if (observerRef.current) {
-      console.log("Disconnecting previous observer");
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    // Check if we should set up the observer
-    if (!hasMore) {
-      console.log("Not setting up observer because hasMore is false");
-      return;
-    }
-
-    // Wait a bit to ensure the loadingRef is attached to DOM
-    const timer = setTimeout(() => {
-      if (loadingRef.current) {
-        console.log(
-          "Setting up new IntersectionObserver on:",
-          loadingRef.current
-        );
-        observerRef.current = new IntersectionObserver(handleObserver, {
-          root: null,
-          rootMargin: "100px", // Increased from 20px to trigger earlier
-          threshold: 0.1,
-        });
-        observerRef.current.observe(loadingRef.current);
-      } else {
-        console.log("loadingRef.current is still null");
-      }
-    }, 100); // Short delay to ensure DOM is updated
-
-    return () => {
-      clearTimeout(timer);
-      if (observerRef.current) {
-        console.log("Cleanup: Disconnecting observer");
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver, hasMore]);
 
   if (status === "loading" && filteredList.length === 0) {
     return (
@@ -147,17 +105,15 @@ const PokemonGrid: React.FC = () => {
         </motion.div>
       </AnimatePresence>
 
-      <div
-        ref={loadingRef}
-        className="mt-4 flex justify-center p-4"
-        style={{ display: hasMore ? "flex" : "none" }}
-      >
-        {status === "loading" ? (
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        ) : (
-          <div className="h-8 w-8"></div>
-        )}
-      </div>
+      {hasMore && (
+        <div ref={loadingRef} className="mt-4 flex justify-center p-4">
+          {status === "loading" ? (
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+          ) : (
+            <div className="h-8 w-8"></div>
+          )}
+        </div>
+      )}
 
       <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} />
     </>
