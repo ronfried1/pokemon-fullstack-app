@@ -134,7 +134,6 @@ export function PokemonCard({
   }
   const handleClick = () => {
     // Fetch pokemon details when card is clicked
-    console.log("pokemon._id", pokemon);
     dispatch(fetchPokemonDetails(pokemon._id || ""));
     onSelect();
   };

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Pokemon extends Document {
@@ -20,15 +20,4 @@ export class Pokemon extends Document {
 }
 
 export const PokemonSchema = SchemaFactory.createForClass(Pokemon);
-
-@Schema({ timestamps: true })
-export class PokemonDetail extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Pokemon', required: true })
-  pokeId: Types.ObjectId;
-
-  @Prop({ type: Object, required: true })
-  details: any;
-}
-
-export const PokemonDetailSchema = SchemaFactory.createForClass(PokemonDetail);
 

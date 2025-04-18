@@ -13,7 +13,14 @@ export interface Pokemon {
     abilities?: (string | { ability: { name: string } })[];
     height?: number;
     weight?: number;
-    stats?: any;
+    stats?: {
+      base_stat: number;
+      effort: number;
+      stat: {
+        name: string;
+        url: string;
+      };
+    }[];
     sprites?: {
       front?: string;
       back?: string;
@@ -27,15 +34,22 @@ export interface Pokemon {
 
 export interface PokemonDetail {
   _id: string; // Document ID
-  pokeId: string; // Reference to Pokemon ID
   details: {
     id?: number;
     name: string;
     types?: { type: { name: string } }[];
     abilities?: { ability: { name: string } }[];
+    base_experience?: number;
     height?: number;
     weight?: number;
-    stats?: any;
+    stats: {
+      base_stat: number;
+      effort: number;
+      stat: {
+        name: string;
+        url: string;
+      };
+    }[];
     sprites?: {
       front?: string;
       back?: string;
@@ -44,7 +58,10 @@ export interface PokemonDetail {
       other?: Record<string, any>;
     };
     evolutions?: Evolution[];
-    moves: { move: { name: string } }[];
+    moves: { move: { name: string; url: string } }[]; // Note: backend uses 'movments' instead of 'moves'
+    species: {
+      url: string;
+    };
   };
 }
 

@@ -229,9 +229,7 @@ const pokemonSlice = createSlice({
           state.selectedPokemon = action.payload;
 
           // Mark the Pokemon as viewed in the list
-          const pokemon = state.list.find(
-            (p) => p._id === action.payload.pokeId
-          );
+          const pokemon = state.list.find((p) => p._id === action.payload._id);
           if (pokemon) {
             pokemon.isViewed = true;
           }

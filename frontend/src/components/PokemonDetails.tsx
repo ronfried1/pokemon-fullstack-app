@@ -1,9 +1,10 @@
 import React from "react";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { motion } from "framer-motion";
+import { Badge } from "./ui/badge";
 
 interface PokemonDetailsProps {
   isOpen: boolean;
@@ -35,149 +36,39 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
     // setIsFavorite(!isFavorite)
   };
 
-  // Helper to get badge color based on Pokemon type
-  const getTypeColor = (type: string) => {
-    const typeColors: Record<string, string> = {
-      fire: "bg-red-500",
-      water: "bg-blue-500",
-      grass: "bg-green-500",
-      electric: "bg-yellow-500",
-      psychic: "bg-purple-500",
-      poison: "bg-purple-700",
-      bug: "bg-lime-600",
-      flying: "bg-sky-300",
-      fighting: "bg-orange-700",
-      rock: "bg-stone-600",
-      ground: "bg-amber-700",
-      ghost: "bg-indigo-600",
-      ice: "bg-cyan-400",
-      dragon: "bg-indigo-700",
-      normal: "bg-gray-400",
-      fairy: "bg-pink-400",
-      steel: "bg-slate-400",
-      dark: "bg-gray-800",
-    };
-
-    return `${typeColors[type.toLowerCase()] || "bg-gray-400"} text-white`;
+  const typeColors: Record<string, string> = {
+    normal: "bg-gradient-to-r from-gray-400 to-gray-500",
+    fire: "bg-gradient-to-r from-red-500 to-orange-500",
+    water: "bg-gradient-to-r from-blue-500 to-blue-400",
+    electric: "bg-gradient-to-r from-yellow-400 to-yellow-300",
+    grass: "bg-gradient-to-r from-green-500 to-green-400",
+    ice: "bg-gradient-to-r from-blue-300 to-blue-200",
+    fighting: "bg-gradient-to-r from-red-700 to-red-600",
+    poison: "bg-gradient-to-r from-purple-500 to-purple-400",
+    ground: "bg-gradient-to-r from-yellow-700 to-yellow-600",
+    flying: "bg-gradient-to-r from-indigo-400 to-indigo-300",
+    psychic: "bg-gradient-to-r from-pink-500 to-pink-400",
+    bug: "bg-gradient-to-r from-green-500 to-lime-500",
+    rock: "bg-gradient-to-r from-yellow-800 to-yellow-700",
+    ghost: "bg-gradient-to-r from-purple-700 to-purple-600",
+    dragon: "bg-gradient-to-r from-indigo-700 to-purple-700",
+    dark: "bg-gradient-to-r from-gray-800 to-gray-700",
+    steel: "bg-gradient-to-r from-gray-500 to-gray-400",
+    fairy: "bg-gradient-to-r from-pink-400 to-pink-300",
   };
-
-  // return (
-  //   <Dialog isOpen={isOpen} onClose={onClose}>
-  //     <DialogContent className="sm:max-w-[425px]">
-  //       <div className="grid gap-4 py-4">
-  //         <div className="grid grid-cols-4 items-center gap-4">Name</div>
-  //         <div className="grid grid-cols-4 items-center gap-4">Username</div>
-  //       </div>
-  //     </DialogContent>
-  //   </Dialog>
-  // );
+  const mainType = details.types?.[0]?.type.name || "normal";
+  const gradientClass =
+    typeColors[mainType] || "bg-gradient-to-r from-gray-400 to-gray-500";
   return (
-    // <Dialog isOpen={isOpen} onClose={onClose}>
-    //   <div className="relative">
-    //     <DialogClose onClick={onClose} />
-    //     <DialogTitle className="pr-8 text-2xl capitalize">
-    //       {details.name}
-    //       {/* {isFavorite && (
-    //         <Badge variant="success" className="ml-2">
-    //           Favorite
-    //         </Badge>
-    //       )} */}
-    //     </DialogTitle>
-
-    //     <DialogContent>
-    //       <div className="flex flex-col items-center gap-6 sm:flex-row">
-    //         <div className="flex flex-col items-center">
-    //           <img
-    //             src={details.sprites?.front}
-    //             alt={details.name}
-    //             className="h-36 w-36"
-    //           />
-    //           <div className="mt-2 flex flex-wrap justify-center gap-1">
-    //             {/* {details.types?.map((type) => (
-    //               <Badge
-    //                 key={type.type.name}
-    //                 className={getTypeColor(type.type.name)}
-    //               >
-    //                 {type.type.name}
-    //               </Badge>
-    //             ))} */}
-    //           </div>
-    //         </div>
-
-    //         <div className="flex-1">
-    //           <div className="mb-4">
-    //             <h3 className="mb-2 font-semibold">Info</h3>
-    //             <p>Height: {details.height ? details.height / 10 : "N/A"}m</p>
-    //             <p>Weight: {details.weight ? details.weight / 10 : "N/A"}kg</p>
-    //           </div>
-
-    //           <div className="mb-4">
-    //             <h3 className="mb-2 font-semibold">Abilities</h3>
-    //             <ul className="list-inside list-disc">
-    //               {/* {details.abilities?.map((ability) => (
-    //                 <li key={ability.ability.name} className="capitalize">
-    //                   {ability.ability.name}
-    //                 </li>
-    //               ))} */}
-    //             </ul>
-    //           </div>
-
-    //           <div className="mb-4">
-    //             <h3 className="mb-2 font-semibold">Stats</h3>
-    //             <div className="grid grid-cols-2 gap-2">
-    //               <p>HP: {details.stats.hp}</p>
-    //               <p>Attack: {details.stats.attack}</p>
-    //               <p>Defense: {details.stats.defense}</p>
-    //               <p>Speed: {details.stats.speed}</p>
-    //             </div>
-    //           </div>
-    //         </div>
-    //       </div>
-
-    //       {details.evolutions && details.evolutions.length > 0 && (
-    //         <div className="mt-6">
-    //           <h3 className="mb-2 font-semibold">Evolutions</h3>
-    //           <div className="flex flex-wrap justify-center gap-4">
-    //             {details.evolutions.map((evolution) => (
-    //               <div
-    //                 key={evolution.id}
-    //                 className="flex flex-col items-center"
-    //               >
-    //                 <img
-    //                   src={evolution.sprite}
-    //                   alt={evolution.name}
-    //                   className="h-24 w-24"
-    //                 />
-    //                 <p className="text-center capitalize">{evolution.name}</p>
-    //                 {evolution.condition && (
-    //                   <span className="text-xs text-gray-500">
-    //                     {evolution.condition}
-    //                   </span>
-    //                 )}
-    //               </div>
-    //             ))}
-    //           </div>
-    //         </div>
-    //       )}
-
-    //       <div className="mt-6 flex justify-end">
-    //         {/* <Button
-    //           onClick={handleToggleFavorite}
-    //           variant={isFavorite ? "destructive" : "default"}
-    //         >
-    //           {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-    //         </Button> */}
-    //       </div>
-    //     </DialogContent>
-    //   </div>
-    // </Dialog>
-    // onClose={onClose} isOpen={isOpen}
-    <Dialog open={isOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogTitle className="hidden">
+        {details.name} - {details.id}
+      </DialogTitle>
       <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
         <div className="grid md:grid-cols-2">
           {/* Left side - Pokemon image and details */}
           <div className="flex flex-col">
-            <div className="relative bg-green-500 p-6">
+            <div className={`relative ${gradientClass} p-6`}>
               <button
                 onClick={toggleFavorite}
                 className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white"
@@ -220,13 +111,13 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                 <h1 className="text-2xl font-bold capitalize">
                   {details.name}
                 </h1>
-                <span className="text-lg font-semibold text-gray-600">
+                <span className="text-xl font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-700">
                   #{details.id}
                 </span>
               </div>
 
               <div className="flex gap-2 mb-4">
-                {/* {details.types?.map((type) => (
+                {details.types?.map((type) => (
                   <Badge
                     key={type.type.name}
                     className={`${
@@ -237,7 +128,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                   >
                     {type.type.name}
                   </Badge>
-                ))} */}
+                ))}
               </div>
 
               {/* <p className="text-gray-700 mb-6">{details.description}</p> */}
@@ -245,24 +136,30 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold mb-2 text-gray-700">Height</h3>
-                  <p className="text-lg">{details.height} m</p>
+                  <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    {details.height} m
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2 text-gray-700">Weight</h3>
-                  <p className="text-lg">{details.weight} kg</p>
+                  <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    {details.weight} kg
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2 text-gray-700">
                     Base Experience
                   </h3>
-                  <p className="text-lg">{details.stats?.base_experience}</p>
+                  <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    {details.base_experience}
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2 text-gray-700">Skills</h3>
-                  <p className="text-lg">
-                    {/* {details.abilities
+                  <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    {details.abilities
                       ?.map((ability) => ability.ability.name)
-                      .join(", ")} */}
+                      .join(", ")}
                   </p>
                 </div>
               </div>
@@ -275,19 +172,19 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger
                   value="statistics"
-                  className="data-[state=active]:bg-white"
+                  className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
                 >
                   Statistics
                 </TabsTrigger>
                 <TabsTrigger
                   value="movements"
-                  className="data-[state=active]:bg-white data-[state=active]:text-red-500 data-[state=active]:border-b-2 data-[state=active]:border-red-500"
+                  className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
                 >
                   Movements
                 </TabsTrigger>
                 <TabsTrigger
                   value="evolution"
-                  className="data-[state=active]:bg-white"
+                  className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
                 >
                   Evolution
                 </TabsTrigger>
@@ -296,7 +193,41 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <TabsContent value="statistics">
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold mb-4">Statistics</h2>
-                  {/* Add statistics content here */}
+                  <div className="space-y-6">
+                    {details.stats.map((stat, index) => (
+                      <motion.div
+                        key={stat.stat.name}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.5 }}
+                      >
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium capitalize">
+                            {stat.stat.name.replace(/-/g, " ")}
+                          </span>
+                          <span className="text-sm font-bold">
+                            {stat.base_stat}
+                          </span>
+                        </div>
+                        <div className="relative h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div
+                            className={`absolute top-0 left-0 h-full rounded-full ${
+                              stat.base_stat < 50
+                                ? "bg-gradient-to-r from-red-500 to-red-400"
+                                : stat.base_stat < 90
+                                ? "bg-gradient-to-r from-yellow-500 to-yellow-400"
+                                : "bg-gradient-to-r from-green-500 to-green-400"
+                            }`}
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${(stat.base_stat / 255) * 100}%`,
+                            }}
+                            transition={{ duration: 1, delay: index * 0.1 }}
+                          />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </TabsContent>
 
@@ -305,7 +236,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                   <h2 className="text-xl font-bold mb-6">Movements</h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* {details.moves.slice(0, 20).map((move, index) => (
+                    {details.moves.slice(0, 20).map((move, index) => (
                       <motion.div
                         key={move.move.name}
                         initial={{ opacity: 0, y: 10 }}
@@ -314,12 +245,12 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                       >
                         <Badge
                           variant="outline"
-                          className="justify-start py-2 px-3 capitalize w-full text-left bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                          className="justify-start py-2 px-3 capitalize w-full text-left bg-secondary/50 hover:bg-secondary transition-colors duration-200"
                         >
                           {move.move.name.replace(/-/g, " ")}
                         </Badge>
                       </motion.div>
-                    ))} */}
+                    ))}
                   </div>
                   <p className="text-sm text-gray-500 mt-4 text-center">
                     Showing 20 of 86 moves
@@ -447,21 +378,21 @@ export default PokemonDetails;
 //               <div className="grid grid-cols-2 gap-6">
 //                 <div>
 //                   <h3 className="font-semibold mb-2 text-gray-700">Height</h3>
-//                   <p className="text-lg">{pokemon.height} m</p>
+//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.height} m</p>
 //                 </div>
 //                 <div>
 //                   <h3 className="font-semibold mb-2 text-gray-700">Weight</h3>
-//                   <p className="text-lg">{pokemon.weight} kg</p>
+//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.weight} kg</p>
 //                 </div>
 //                 <div>
 //                   <h3 className="font-semibold mb-2 text-gray-700">
 //                     Base Experience
 //                   </h3>
-//                   <p className="text-lg">{pokemon.baseExperience}</p>
+//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.baseExperience}</p>
 //                 </div>
 //                 <div>
 //                   <h3 className="font-semibold mb-2 text-gray-700">Skills</h3>
-//                   <p className="text-lg">{pokemon.skills.join(", ")}</p>
+//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.skills.join(", ")}</p>
 //                 </div>
 //               </div>
 //             </div>

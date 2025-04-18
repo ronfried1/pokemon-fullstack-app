@@ -7,14 +7,14 @@ import {
 import axios from 'axios';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Pokemon, PokemonDetail } from './schemas/pokemon.schema';
+import { Pokemon } from './schemas/pokemon.schema';
 
 export interface PokemonResult {
   name: string;
   url: string;
   isFav: boolean;
   isViewed: boolean;
-  details: PokemonDetail;
+  details: any;
 }
 
 interface PokemonListResponse {
@@ -53,16 +53,54 @@ interface EvolutionData {
   condition?: string;
 }
 
+// Add missing interfaces
+interface PokemonApiResponse {
+  id: number;
+  name: string;
+  types: {
+    type: {
+      name: string;
+    };
+  }[];
+  abilities: {
+    ability: {
+      name: string;
+    };
+  }[];
+  height: number;
+  weight: number;
+  stats: {
+    base_stat: number;
+    stat: {
+      name: string;
+    };
+  }[];
+  sprites: {
+    front_default: string;
+    back_default: string;
+  };
+  species: {
+    url: string;
+  };
+  moves: any[];
+}
+
+interface PokemonSpeciesResponse {
+  evolution_chain: {
+    url: string;
+  };
+}
+
+interface EvolutionChainResponse {
+  chain: ChainLink;
+}
+
 @Injectable()
 export class PokemonService {
   private readonly logger = new Logger(PokemonService.name);
   private readonly pokeApiBaseUrl = 'https://pokeapi.co/api/v2';
 
-  constructor(
-    @InjectModel('Pokemon') private pokemonModel: Model<Pokemon>,
-    @InjectModel('PokemonDetail')
-    private pokemonDetailModel: Model<PokemonDetail>,
-  ) {}
+  constructor(@InjectModel('Pokemon') private pokemonModel: Model<Pokemon>) {}
 
   async getAllPokemon(offset = 0, limit = 20): Promise<PokemonResult[]> {
     const startTime = Date.now();
@@ -142,120 +180,121 @@ export class PokemonService {
   }
 
   async fetchAndSavePokemonDetails(pokemon: Pokemon) {
-    const response = await axios.get(pokemon.url);
-    const details = response.data;
+    try {
+      const response = await axios.get(pokemon.url);
+      const details = response.data;
 
-    await this.pokemonModel.updateOne(
-      { _id: pokemon._id },
-      { $set: { details } },
-    );
+      // Update the Pokemon document with the details
+      pokemon.details = details;
+      await pokemon.save();
 
-    return { details };
+      return { details };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to fetch Pokemon details: ${errorMessage}`);
+      throw new InternalServerErrorException('Failed to fetch Pokemon details');
+    }
   }
 
   async getPokemonDetails(pokemonId: string): Promise<any> {
     try {
       this.logger.log(`getPokemonDetails execution time: ${Date.now()}`);
-      // First check if we already have the details in our database
-      const existingDetail = await this.pokemonDetailModel
-        .findOne({
-          pokeId: new Types.ObjectId(pokemonId),
-        })
+
+      // Find the Pokemon by ID
+      const pokemon = await this.pokemonModel
+        .findById(new Types.ObjectId(pokemonId))
         .exec();
+      if (!pokemon) {
+        throw new NotFoundException(`Pokemon with ID ${pokemonId} not found`);
+      }
+
       this.logger.log(
         `getPokemonDetails execution time: ${Date.now()}`,
-        existingDetail,
+        pokemon._id,
       );
-      if (existingDetail) {
-        this.logger.log(`getPokemonDetails execution timess: ${Date.now()}`);
-        return existingDetail;
+
+      // If we already have details, return them
+      if (pokemon.details) {
+        this.logger.log(
+          `getPokemonDetails returning existing details: ${Date.now()}`,
+        );
+        return { details: pokemon.details, _id: pokemon._id };
       }
-      // console.log('pokemonId', typeof pokemonId);
 
-      // // Find the basic Pokemon info
-      // const pokemon = await this.pokemonModel.findById(pokemonId).exec();
-      // if (!pokemon) {
-      //   throw new NotFoundException(`Pokemon with ID ${pokemonId} not found`);
-      // }
+      // Extract the Pokemon number from the URL
+      const urlParts = pokemon.url.split('/');
+      const pokeNumber = urlParts[urlParts.length - 2];
 
-      // // Extract the Pokemon number from the URL
-      // const urlParts = pokemon.url.split('/');
-      // const pokeNumber = urlParts[urlParts.length - 2];
+      // Fetch detailed information from PokeAPI
+      const response = await axios.get<PokemonApiResponse>(
+        `${this.pokeApiBaseUrl}/pokemon/${pokeNumber}`,
+      );
 
-      // // Fetch detailed information from PokeAPI
-      // const response = await axios.get<PokemonApiResponse>(
-      //   `${this.pokeApiBaseUrl}/pokemon/${pokeNumber}`,
-      // );
+      // Get species data for evolutions
+      const speciesResponse = await axios.get<PokemonSpeciesResponse>(
+        response.data.species.url,
+      );
 
-      // // Get species data for evolutions
-      // const speciesResponse = await axios.get<PokemonSpeciesResponse>(
-      //   response.data.species.url,
-      // );
+      // Fetch evolution chain if available
+      let evolutionChain: EvolutionData[] = [];
+      if (speciesResponse.data.evolution_chain) {
+        const evolutionResponse = await axios.get<EvolutionChainResponse>(
+          speciesResponse.data.evolution_chain.url,
+        );
 
-      // // Fetch evolution chain if available
-      // let evolutionChain: EvolutionData[] = [];
-      // if (speciesResponse.data.evolution_chain) {
-      //   const evolutionResponse = await axios.get<EvolutionChainResponse>(
-      //     speciesResponse.data.evolution_chain.url,
-      //   );
+        // Process evolution chain
+        evolutionChain = this.processEvolutionChain(
+          evolutionResponse.data.chain,
+        );
+      }
 
-      //   // Process evolution chain (simplified for this example)
-      //   evolutionChain = this.processEvolutionChain(
-      //     evolutionResponse.data.chain,
-      //   );
-      // }
+      // Transform the data into our structure
+      const detailData = {
+        id: response.data.id,
+        name: response.data.name,
+        types: response.data.types.map((type) => type.type.name),
+        abilities: response.data.abilities.map(
+          (ability) => ability.ability.name,
+        ),
+        height: response.data.height,
+        weight: response.data.weight,
+        stats: {
+          hp:
+            response.data.stats.find((stat) => stat.stat.name === 'hp')
+              ?.base_stat || 0,
+          attack:
+            response.data.stats.find((stat) => stat.stat.name === 'attack')
+              ?.base_stat || 0,
+          defense:
+            response.data.stats.find((stat) => stat.stat.name === 'defense')
+              ?.base_stat || 0,
+          specialAttack:
+            response.data.stats.find(
+              (stat) => stat.stat.name === 'special-attack',
+            )?.base_stat || 0,
+          specialDefense:
+            response.data.stats.find(
+              (stat) => stat.stat.name === 'special-defense',
+            )?.base_stat || 0,
+          speed:
+            response.data.stats.find((stat) => stat.stat.name === 'speed')
+              ?.base_stat || 0,
+        },
+        sprites: {
+          front: response.data.sprites.front_default,
+          back: response.data.sprites.back_default,
+        },
+        evolutions: evolutionChain,
+        movments: response.data.moves,
+      };
 
-      // // Transform the data into our structure
-      // const detailData = {
-      //   id: response.data.id,
-      //   name: response.data.name,
-      //   types: response.data.types.map((type) => type.type.name),
-      //   abilities: response.data.abilities.map(
-      //     (ability) => ability.ability.name,
-      //   ),
-      //   height: response.data.height,
-      //   weight: response.data.weight,
-      //   stats: {
-      //     hp:
-      //       response.data.stats.find((stat) => stat.stat.name === 'hp')
-      //         ?.base_stat || 0,
-      //     attack:
-      //       response.data.stats.find((stat) => stat.stat.name === 'attack')
-      //         ?.base_stat || 0,
-      //     defense:
-      //       response.data.stats.find((stat) => stat.stat.name === 'defense')
-      //         ?.base_stat || 0,
-      //     specialAttack:
-      //       response.data.stats.find(
-      //         (stat) => stat.stat.name === 'special-attack',
-      //       )?.base_stat || 0,
-      //     specialDefense:
-      //       response.data.stats.find(
-      //         (stat) => stat.stat.name === 'special-defense',
-      //       )?.base_stat || 0,
-      //     speed:
-      //       response.data.stats.find((stat) => stat.stat.name === 'speed')
-      //         ?.base_stat || 0,
-      //   },
-      //   sprites: {
-      //     front: response.data.sprites.front_default,
-      //     back: response.data.sprites.back_default,
-      //   },
-      //   evolutions: evolutionChain,
-      //   movments: response.data.moves,
-      // };
+      // Save the details directly to the Pokemon document
+      pokemon.details = detailData;
+      pokemon.isViewed = true;
+      await pokemon.save();
 
-      // // Save the details to our database
-      // const pokemonDetail = await this.pokemonDetailModel.create({
-      //   pokeId: pokemon._id,
-      //   details: detailData,
-      // });
-
-      // // Mark the Pokemon as viewed
-      // pokemon.isViewed = true;
-      // await pokemon.save();
-
-      // return pokemonDetail;
+      return { details: pokemon.details, _id: pokemon._id };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';

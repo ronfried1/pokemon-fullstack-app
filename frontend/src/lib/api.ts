@@ -69,7 +69,6 @@ const PokemonSchema = z
 const PokemonDetailSchema = z
   .object({
     _id: z.string(),
-    pokeId: z.string(),
     details: PokemonDetailsSchema,
   })
   .passthrough();
@@ -137,8 +136,9 @@ export const pokemonApi = {
     try {
       console.log("API Response:", pokemonId);
       const response = await api.get(`/pokemon/${pokemonId}/details`);
-
+      console.log("API Response:", response.data);
       try {
+        // The response now comes directly from the Pokemon document
         return PokemonDetailSchema.parse(
           response.data
         ) as unknown as PokemonDetail;
