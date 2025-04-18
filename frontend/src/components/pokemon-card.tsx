@@ -52,7 +52,7 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
     e.stopPropagation();
 
     const storedFavorites = localStorage.getItem("favorites");
-    let favorites: number[] = storedFavorites
+    let favorites: string[] = storedFavorites
       ? JSON.parse(storedFavorites)
       : [];
 
@@ -87,9 +87,44 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
     setIsHovered(false);
   };
 
-  const mainType = pokemon.types[0]?.type.name || "normal";
+  // Get type name accounting for different API formats
+  const getTypeName = (type: any): string => {
+    if (typeof type === "string") return type;
+    if (type?.type?.name) return type.type.name;
+    return "normal";
+  };
+
+  // Get sprite URL accounting for different API formats
+  const getSpriteUrl = (details: any): string => {
+    if (!details?.sprites) return "/placeholder.svg";
+
+    // Handle different sprite formats
+    if (details.sprites.other?.["official-artwork"]?.front_default) {
+      return details.sprites.other["official-artwork"].front_default;
+    }
+    if (details.sprites.front) return details.sprites.front;
+    if (details.sprites.front_default) return details.sprites.front_default;
+
+    return "/placeholder.svg";
+  };
+
+  // Use the first type from the types array
+  const mainType = pokemon.details?.types?.[0];
+  const typeValue = getTypeName(mainType);
   const gradientClass =
-    typeColors[mainType] || "bg-gradient-to-r from-gray-400 to-gray-500";
+    typeColors[typeValue] || "bg-gradient-to-r from-gray-400 to-gray-500";
+
+  // console.log(pokemon);
+  // If details aren't loaded yet, show a placeholder
+  if (!pokemon.details) {
+    return (
+      <Card className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-white/90 backdrop-blur-sm">
+        <div className="p-5">
+          <h3 className="font-bold text-xl capitalize">Loading...</h3>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <motion.div
@@ -134,13 +169,8 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
                   ease: "easeInOut",
                 }}
               >
-                <Image
-                  src={
-                    pokemon.sprites.other["official-artwork"].front_default ||
-                    pokemon.sprites.front_default ||
-                    "/placeholder.svg?height=150&width=150" ||
-                    "/placeholder.svg"
-                  }
+                <img
+                  src={getSpriteUrl(pokemon.details)}
                   alt={pokemon.name}
                   width={150}
                   height={150}
@@ -155,20 +185,23 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
                 {pokemon.name.replace(/-/g, " ")}
               </h3>
               <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
-                #{pokemon.id}
+                #{pokemon.details.id || "?"}
               </span>
             </div>
             <div className="flex flex-wrap gap-2 mt-3">
-              {pokemon.types.map((type: { type: { name: string } }) => (
-                <Badge
-                  key={type.type.name}
-                  className={`${
-                    typeColors[type.type.name] || "bg-gray-500"
-                  } text-white px-3 py-1 text-xs font-medium`}
-                >
-                  {type.type.name}
-                </Badge>
-              ))}
+              {pokemon.details.types?.map((type, index) => {
+                const typeName = getTypeName(type);
+                return (
+                  <Badge
+                    key={index}
+                    className={`${
+                      typeColors[typeName] || "bg-gray-500"
+                    } text-white px-3 py-1 text-xs font-medium`}
+                  >
+                    {typeName}
+                  </Badge>
+                );
+              })}
             </div>
           </div>
         </Card>

@@ -4,50 +4,75 @@ import { Pokemon, PokemonDetail } from "../types/pokemon";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-// Zod schema for simplified Pokemon
-const PokemonSchema = z.object({
-  _id: z.string().optional().default("temp-id"),
-  name: z.string(),
-  url: z.string(),
-  isFav: z.boolean().default(false),
-  isViewed: z.boolean().default(false),
-});
-
-// Zod schema for detailed Pokemon information
-const PokemonDetailSchema = z.object({
-  _id: z.string(),
-  pokeId: z.string(),
-  details: z.object({
-    id: z.number(),
-    name: z.string(),
-    types: z.array(z.string()),
-    abilities: z.array(z.string()),
-    height: z.number(),
-    weight: z.number(),
-    stats: z.object({
-      hp: z.number(),
-      attack: z.number(),
-      defense: z.number(),
-      specialAttack: z.number(),
-      specialDefense: z.number(),
-      speed: z.number(),
-    }),
-    sprites: z.object({
-      front: z.string(),
-      back: z.string().optional(),
-    }),
-    evolutions: z
+// Define the nested details schema that both Pokemon and PokemonDetail will use
+const PokemonDetailsSchema = z
+  .object({
+    id: z.number().optional(),
+    name: z.string().optional(),
+    types: z
       .array(
-        z.object({
-          id: z.number(),
-          name: z.string(),
-          sprite: z.string(),
-          condition: z.string().optional(),
-        })
+        z.union([
+          z.string(),
+          z.object({
+            type: z.object({
+              name: z.string(),
+            }),
+          }),
+        ])
       )
       .optional(),
-  }),
-});
+    abilities: z
+      .array(
+        z.union([
+          z.string(),
+          z.object({
+            ability: z.object({
+              name: z.string(),
+            }),
+          }),
+        ])
+      )
+      .optional(),
+    height: z.number().optional(),
+    weight: z.number().optional(),
+    stats: z.any().optional(),
+    sprites: z
+      .union([
+        z.object({
+          front: z.string(),
+          back: z.string().optional(),
+        }),
+        z.object({
+          front_default: z.string().optional(),
+          back_default: z.string().optional(),
+          other: z.record(z.any()).optional(),
+        }),
+      ])
+      .optional(),
+    evolutions: z.array(z.any()).optional(),
+  })
+  .passthrough();
+
+// Zod schema for simplified Pokemon
+const PokemonSchema = z
+  .object({
+    _id: z.string().optional().default("temp-id"),
+    name: z.string(),
+    url: z.string(),
+    isFav: z.boolean().default(false),
+    isViewed: z.boolean().default(false),
+    details: PokemonDetailsSchema.optional(),
+  })
+  .passthrough();
+
+// Zod schema for detailed Pokemon information
+const PokemonDetailSchema = z
+  .object({
+    _id: z.string(),
+    pokeId: z.string(),
+    details: PokemonDetailsSchema,
+  })
+  .passthrough();
 
 const PokemonListSchema = z.array(PokemonSchema);
 // Update the schema to accept either string array or objects with name property
@@ -88,9 +113,19 @@ export const pokemonApi = {
         url: pokemon.url,
         isFav: pokemon.isFav !== undefined ? pokemon.isFav : false,
         isViewed: pokemon.isViewed !== undefined ? pokemon.isViewed : false,
+        details: pokemon.details || {},
       }));
 
-      return PokemonListSchema.parse(processedData);
+      try {
+        return PokemonListSchema.parse(processedData) as unknown as Pokemon[];
+      } catch (zodError) {
+        console.error("Zod validation error:", zodError);
+        console.log(
+          "Sample data causing the error:",
+          JSON.stringify(processedData[0], null, 2)
+        );
+        throw zodError;
+      }
     } catch (error) {
       console.error("Error fetching Pokemon:", error);
       throw error;
@@ -101,7 +136,18 @@ export const pokemonApi = {
   getPokemonDetails: async (pokemonId: string): Promise<PokemonDetail> => {
     try {
       const response = await api.get(`/pokemon/${pokemonId}/details`);
-      return PokemonDetailSchema.parse(response.data);
+      try {
+        return PokemonDetailSchema.parse(
+          response.data
+        ) as unknown as PokemonDetail;
+      } catch (zodError) {
+        console.error("Zod validation error in details:", zodError);
+        console.log(
+          "Data causing the error:",
+          JSON.stringify(response.data, null, 2)
+        );
+        throw zodError;
+      }
     } catch (error) {
       console.error("Error fetching Pokemon details:", error);
       throw error;

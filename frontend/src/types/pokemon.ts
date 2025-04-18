@@ -4,29 +4,42 @@ export interface Pokemon {
   url: string;
   isFav: boolean;
   isViewed: boolean;
+  details?: {
+    id?: number;
+    name?: string;
+    types?: (string | { type: { name: string } })[];
+    abilities?: (string | { ability: { name: string } })[];
+    height?: number;
+    weight?: number;
+    stats?: any;
+    sprites?: {
+      front?: string;
+      back?: string;
+      front_default?: string;
+      back_default?: string;
+      other?: Record<string, any>;
+    };
+    evolutions?: Evolution[];
+  };
 }
 
 export interface PokemonDetail {
-  _id: string; // ObjectId
-  pokeId: string; // Reference to Pokemon _id (150PokeId in the diagram)
+  _id: string; // Document ID
+  pokeId: string; // Reference to Pokemon ID
   details: {
-    id: number;
-    name: string;
-    types: string[];
-    abilities: string[];
-    height: number;
-    weight: number;
-    stats: {
-      hp: number;
-      attack: number;
-      defense: number;
-      specialAttack: number;
-      specialDefense: number;
-      speed: number;
-    };
-    sprites: {
-      front: string;
+    id?: number;
+    name?: string;
+    types?: (string | { type: { name: string } })[];
+    abilities?: (string | { ability: { name: string } })[];
+    height?: number;
+    weight?: number;
+    stats?: any;
+    sprites?: {
+      front?: string;
       back?: string;
+      front_default?: string;
+      back_default?: string;
+      other?: Record<string, any>;
     };
     evolutions?: Evolution[];
   };

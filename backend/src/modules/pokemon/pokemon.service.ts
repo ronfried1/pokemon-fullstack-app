@@ -14,6 +14,7 @@ export interface PokemonResult {
   url: string;
   isFav: boolean;
   isViewed: boolean;
+  details: PokemonDetail;
 }
 
 interface PokemonListResponse {
@@ -92,6 +93,7 @@ export class PokemonService {
   ) {}
 
   async getAllPokemon(offset = 0, limit = 20): Promise<PokemonResult[]> {
+    const startTime = Date.now();
     try {
       let mongoData = await this.pokemonModel
         .find()
@@ -133,13 +135,23 @@ export class PokemonService {
             url: pokemon.url,
             isFav: pokemon.isFav,
             isViewed: pokemon.isViewed,
-            details: pokemon.details, // include the enriched details!
+            details: pokemon.details,
           };
         }),
       );
 
+      const endTime = Date.now();
+      this.logger.log(
+        `getAllPokemon execution time: ${endTime - startTime}ms (offset: ${offset}, limit: ${limit})`,
+      );
+
       return enrichedPokemon;
     } catch (error) {
+      const endTime = Date.now();
+      this.logger.error(
+        `getAllPokemon failed after ${endTime - startTime}ms: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+      );
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
 

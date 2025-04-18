@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import PokemonCard from "./PokemonCard";
+// import PokemonCard from "./PokemonCard";
+import { PokemonCard } from "./pokemon-card";
 import PokemonDetails from "./PokemonDetails";
 import { loadMorePokemon } from "../store/pokemonSlice";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PokemonGrid: React.FC = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -119,19 +121,35 @@ const PokemonGrid: React.FC = () => {
   }
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {filteredList.map((pokemon) => (
-          <PokemonCard
-            key={pokemon._id}
-            pokemon={pokemon}
-            onSelect={openDetails}
-          />
-        ))}
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="pokemon-grid"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        >
+          {filteredList.map((pokemon, index) => (
+            <motion.div
+              key={pokemon._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                transition: { delay: index * 0.05 },
+              }}
+            >
+              {/* <PokemonCard pokemon={pokemon} onSelect={openDetails} /> */}
+              <PokemonCard pokemon={pokemon} />
+            </motion.div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
 
       <div
         ref={loadingRef}
-        className="flex justify-center p-4 mt-4"
+        className="mt-4 flex justify-center p-4"
         style={{ display: hasMore ? "flex" : "none" }}
       >
         {status === "loading" ? (
