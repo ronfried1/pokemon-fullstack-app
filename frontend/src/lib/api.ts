@@ -56,7 +56,7 @@ const PokemonDetailsSchema = z
 // Zod schema for simplified Pokemon
 const PokemonSchema = z
   .object({
-    _id: z.string().optional().default("temp-id"),
+    _id: z.string(),
     name: z.string(),
     url: z.string(),
     isFav: z.boolean().default(false),
@@ -108,7 +108,7 @@ export const pokemonApi = {
 
       // Map any missing fields with defaults before validation
       const processedData = response.data.map((pokemon: any) => ({
-        _id: pokemon._id || `temp-id-${pokemon.name}`,
+        _id: pokemon._id,
         name: pokemon.name,
         url: pokemon.url,
         isFav: pokemon.isFav !== undefined ? pokemon.isFav : false,
@@ -136,6 +136,8 @@ export const pokemonApi = {
   getPokemonDetails: async (pokemonId: string): Promise<PokemonDetail> => {
     try {
       const response = await api.get(`/pokemon/${pokemonId}/details`);
+      console.log("API Response:", response.data);
+
       try {
         return PokemonDetailSchema.parse(
           response.data

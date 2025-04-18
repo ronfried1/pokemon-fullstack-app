@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { PokemonCard } from "./pokemon-card";
 import { loadMorePokemon } from "../store/pokemonSlice";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { PokemonCardSkeleton } from "./PokemonCardSkeleton";
+import PokemonDetails from "./PokemonDetails";
 
 // Loading indicator component
 const LoadingSpinner = () => (
@@ -28,23 +28,20 @@ const EmptyState = () => (
 );
 
 const PokemonGrid: React.FC = () => {
-  // const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { filteredList, status, error, hasMore, limit } = useAppSelector(
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();
   const { ref: observerRef, inView } = useInView();
-  // const [visiblePokemon, setVisiblePokemon] = useState<Pokemon[]>(filteredList);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const isInitialLoading =
     (status === "idle" || status === "loading") && filteredList.length === 0;
   const isLoadingMore = status === "loading" && filteredList.length > 0;
 
   // // Open and close details
-  // const openDetails = useCallback(() => setIsDetailsOpen(true), []);
-  // const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
-
-  // Infinite scroll trigger
+  const openDetails = useCallback(() => setIsDetailsOpen(true), []);
+  const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -55,11 +52,6 @@ const PokemonGrid: React.FC = () => {
 
     return () => clearTimeout(debounceTimer);
   }, [inView, hasMore, dispatch, isLoadingMore]);
-
-  // // Update visible list
-  // useEffect(() => {
-  //   setVisiblePokemon(filteredList);
-  // }, [filteredList]);
 
   if (isInitialLoading) {
     return <LoadingSpinner />;
@@ -85,15 +77,16 @@ const PokemonGrid: React.FC = () => {
             key={pokemon._id}
             pokemon={pokemon}
             index={index % limit}
+            onSelect={openDetails}
           />
         ))}
       </div>
       {hasMore && (
         <div ref={observerRef}>
-          {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />}
+          {/* {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />} */}
         </div>
       )}
-      {/* <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} /> */}
+      <PokemonDetails isOpen={true} onClose={closeDetails} />
     </>
   );
 };

@@ -30,9 +30,9 @@ export interface PokemonDetail {
   pokeId: string; // Reference to Pokemon ID
   details: {
     id?: number;
-    name?: string;
-    types?: (string | { type: { name: string } })[];
-    abilities?: (string | { ability: { name: string } })[];
+    name: string;
+    types?: { type: { name: string } }[];
+    abilities?: { ability: { name: string } }[];
     height?: number;
     weight?: number;
     stats?: any;

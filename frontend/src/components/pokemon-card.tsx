@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Heart } from "lucide-react";
@@ -10,6 +10,8 @@ import { Heart } from "lucide-react";
 // import type { Pokemon } from "@/lib/types"
 import { motion } from "framer-motion";
 import { Pokemon } from "../types/pokemon";
+import { useAppDispatch } from "../store/hooks";
+import { fetchPokemonDetails } from "../store/pokemonSlice";
 
 const typeColors: Record<string, string> = {
   normal: "bg-gradient-to-r from-gray-400 to-gray-500",
@@ -40,14 +42,17 @@ const variants = {
 export function PokemonCard({
   pokemon,
   index,
+  onSelect,
 }: {
   pokemon: Pokemon;
   index: number;
+  onSelect: () => void;
 }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const dispatch = useAppDispatch();
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -127,34 +132,39 @@ export function PokemonCard({
       </Card>
     );
   }
+  const handleClick = () => {
+    // Fetch pokemon details when card is clicked
+    dispatch(fetchPokemonDetails(pokemon._id || ""));
+    onSelect();
+  };
 
   return (
-    // <motion.div
-    //   variants={variants}
-    //   initial="hidden"
-    //   animate="visible"
-    //   transition={{ delay: index * 0.25, ease: "easeInOut", duration: 0.5 }}
-    //   viewport={{ amount: 0 }}
-    //   className="max-w-sm rounded relative w-full"
-    // >
-    //   <motion.div
-    //     ref={cardRef}
-    //     className="h-full perspective-1000"
-    //     onMouseMove={handleMouseMove}
-    //     onMouseEnter={() => setIsHovered(true)}
-    //     onMouseLeave={resetRotation}
-    //     whileHover={{ scale: 1.05, zIndex: 10 }}
-    //     whileTap={{ scale: 0.98 }}
-    //   >
-    //     <motion.div
-    //       style={{
-    //         rotateX: isHovered ? rotation.x : 0,
-    //         rotateY: isHovered ? rotation.y : 0,
-    //       }}
-    //       transition={{ type: "spring", stiffness: 300, damping: 15 }}
-    //       className="h-full"
-    //     >
     <motion.div
+      variants={variants}
+      initial="hidden"
+      animate="visible"
+      transition={{ delay: index * 0.2, ease: "easeInOut", duration: 0.5 }}
+      viewport={{ amount: 0 }}
+      className="max-w-sm rounded relative w-full"
+    >
+      <motion.div
+        ref={cardRef}
+        className="h-full perspective-1000"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={resetRotation}
+        whileHover={{ scale: 1.05, zIndex: 10 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <motion.div
+          style={{
+            rotateX: isHovered ? rotation.x : 0,
+            rotateY: isHovered ? rotation.y : 0,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          className="h-full"
+        >
+          {/* <motion.div
       ref={cardRef}
       className="h-full perspective-1000 max-w-sm rounded relative w-full"
       variants={variants}
@@ -171,71 +181,79 @@ export function PokemonCard({
         rotateX: isHovered ? rotation.x : 0,
         rotateY: isHovered ? rotation.y : 0,
       }}
-    >
-      <Card className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-white/90 backdrop-blur-sm transition-all duration-300">
-        <div className={`relative pt-6 px-6 ${gradientClass} rounded-t-2xl`}>
-          <motion.button
-            onClick={toggleFavorite}
-            className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.8 }}
+    > */}
+          <Card
+            onClick={handleClick}
+            className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-white/90 backdrop-blur-sm transition-all duration-300"
           >
-            <Heart
-              className={`h-5 w-5 ${
-                isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-              }`}
-            />
-          </motion.button>
-          <div className="flex justify-center items-center p-4">
-            <motion.div
-              animate={{
-                y: [0, -5, 0],
-              }}
-              transition={{
-                repeat: Number.POSITIVE_INFINITY,
-                duration: 2,
-                ease: "easeInOut",
-              }}
+            <div
+              className={`relative pt-6 px-6 ${gradientClass} rounded-t-2xl`}
             >
-              <img
-                src={getSpriteUrl(pokemon.details)}
-                alt={pokemon.name}
-                width={150}
-                height={150}
-                className="object-contain drop-shadow-lg"
-              />
-            </motion.div>
-          </div>
-        </div>
-        <div className="p-5">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-bold text-xl capitalize">
-              {pokemon.name.replace(/-/g, " ")}
-            </h3>
-            <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
-              #{pokemon.details.id || "?"}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {pokemon.details.types?.map((type, index) => {
-              const typeName = getTypeName(type);
-              return (
-                <Badge
-                  key={index}
-                  className={`${
-                    typeColors[typeName] || "bg-gray-500"
-                  } text-white px-3 py-1 text-xs font-medium`}
+              <motion.button
+                onClick={toggleFavorite}
+                className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.8 }}
+              >
+                <Heart
+                  className={`h-5 w-5 ${
+                    isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+                  }`}
+                />
+              </motion.button>
+              <div className="flex justify-center items-center p-4">
+                <motion.div
+                  animate={{
+                    y: [0, -5, 0],
+                  }}
+                  transition={{
+                    repeat: Number.POSITIVE_INFINITY,
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
                 >
-                  {typeName}
-                </Badge>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
-      {/* </motion.div>
+                  <img
+                    src={getSpriteUrl(pokemon.details)}
+                    alt={pokemon.name}
+                    width={150}
+                    height={150}
+                    className="object-contain drop-shadow-lg"
+                  />
+                </motion.div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-xl capitalize">
+                  {pokemon.name.replace(/-/g, " ")}
+                </h3>
+                <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
+                  #{pokemon.details.id || "?"}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {pokemon.details.types?.map((type, index) => {
+                  const typeName = getTypeName(type);
+                  return (
+                    <Badge
+                      key={index}
+                      className={`${
+                        typeColors[typeName] || "bg-gray-500"
+                      } text-white px-3 py-1 text-xs font-medium`}
+                    >
+                      {typeName}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
       </motion.div>
-    </motion.div> */}
     </motion.div>
   );
+}
+
+{
+  /* </motion.div> */
 }
