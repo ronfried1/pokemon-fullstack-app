@@ -135,8 +135,8 @@ export const pokemonApi = {
   // Fetch Pokemon details
   getPokemonDetails: async (pokemonId: string): Promise<PokemonDetail> => {
     try {
+      console.log("API Response:", pokemonId);
       const response = await api.get(`/pokemon/${pokemonId}/details`);
-      console.log("API Response:", response.data);
 
       try {
         return PokemonDetailSchema.parse(

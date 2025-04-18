@@ -44,6 +44,7 @@ export interface PokemonDetail {
       other?: Record<string, any>;
     };
     evolutions?: Evolution[];
+    moves: { move: { name: string } }[];
   };
 }
 

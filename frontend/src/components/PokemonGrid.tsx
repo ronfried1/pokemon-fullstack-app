@@ -68,7 +68,7 @@ const PokemonGrid: React.FC = () => {
   if (status === "succeeded" && filteredList.length === 0) {
     return <EmptyState />;
   }
-
+  console.log("filteredList", filteredList);
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -86,7 +86,7 @@ const PokemonGrid: React.FC = () => {
           {/* {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />} */}
         </div>
       )}
-      <PokemonDetails isOpen={true} onClose={closeDetails} />
+      <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} />
     </>
   );
 };
