@@ -38,15 +38,6 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    // Check if this Pokémon is in favorites
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      const favorites = JSON.parse(storedFavorites);
-      setIsFavorite(favorites.includes(pokemon._id));
-    }
-  }, [pokemon._id]);
-
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
