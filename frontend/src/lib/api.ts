@@ -6,11 +6,11 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 // Zod schema for simplified Pokemon
 const PokemonSchema = z.object({
-  _id: z.string(),
+  _id: z.string().optional().default("temp-id"),
   name: z.string(),
   url: z.string(),
-  isFav: z.boolean(),
-  isViewed: z.boolean(),
+  isFav: z.boolean().default(false),
+  isViewed: z.boolean().default(false),
 });
 
 // Zod schema for detailed Pokemon information
@@ -50,7 +50,17 @@ const PokemonDetailSchema = z.object({
 });
 
 const PokemonListSchema = z.array(PokemonSchema);
-const FavoritesListSchema = z.array(z.string());
+// Update the schema to accept either string array or objects with name property
+const FavoritesListSchema = z.array(
+  z.union([
+    z.string(),
+    z.object({
+      _id: z.string(),
+      name: z.string(),
+      createdAt: z.string().optional(),
+    }),
+  ])
+);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -70,7 +80,17 @@ export const pokemonApi = {
         `/pokemon?offset=${offset}&limit=${limit}`
       );
       console.log(`API Response: Got ${response.data.length} Pokemon`);
-      return PokemonListSchema.parse(response.data);
+
+      // Map any missing fields with defaults before validation
+      const processedData = response.data.map((pokemon: any) => ({
+        _id: pokemon._id || `temp-id-${pokemon.name}`,
+        name: pokemon.name,
+        url: pokemon.url,
+        isFav: pokemon.isFav !== undefined ? pokemon.isFav : false,
+        isViewed: pokemon.isViewed !== undefined ? pokemon.isViewed : false,
+      }));
+
+      return PokemonListSchema.parse(processedData);
     } catch (error) {
       console.error("Error fetching Pokemon:", error);
       throw error;
@@ -92,7 +112,10 @@ export const pokemonApi = {
   getFavorites: async (): Promise<string[]> => {
     try {
       const response = await api.get("/favorites");
-      return FavoritesListSchema.parse(response.data);
+      // Parse the data with our updated schema
+      const favorites = FavoritesListSchema.parse(response.data);
+      // Extract just the names if they're objects
+      return favorites.map((fav) => (typeof fav === "string" ? fav : fav.name));
     } catch (error) {
       console.error("Error fetching favorites:", error);
       throw error;

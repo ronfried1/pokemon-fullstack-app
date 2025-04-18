@@ -10,7 +10,6 @@ import { Model, Types } from 'mongoose';
 import { Pokemon, PokemonDetail } from './schemas/pokemon.schema';
 
 export interface PokemonResult {
-  _id: string;
   name: string;
   url: string;
   isFav: boolean;
@@ -94,47 +93,52 @@ export class PokemonService {
 
   async getAllPokemon(offset = 0, limit = 20): Promise<PokemonResult[]> {
     try {
-      // check if there data in mongo for pokemon
-      const mongoData = await this.pokemonModel
+      let mongoData = await this.pokemonModel
         .find()
         .skip(offset)
         .limit(limit)
         .exec();
 
-      if (mongoData.length > 0) {
-        return mongoData.map((pokemon) => ({
-          _id: pokemon._id.toString(),
+      if (mongoData.length === 0 && offset === 0) {
+        // No data at all - fetch initial 150 pokemons
+        const response = await axios.get<PokemonListResponse>(
+          `${this.pokeApiBaseUrl}/pokemon?limit=150`,
+        );
+
+        const pokemonToSave = response.data.results.map((pokemon) => ({
           name: pokemon.name,
           url: pokemon.url,
-          isFav: pokemon.isFav,
-          isViewed: pokemon.isViewed,
+          isFav: false,
+          isViewed: false,
         }));
+
+        await this.pokemonModel.insertMany(pokemonToSave);
+
+        mongoData = await this.pokemonModel
+          .find()
+          .skip(offset)
+          .limit(limit)
+          .exec();
       }
 
-      //if there is no mongo data, fetch from pokeapi
-      const response = await axios.get<PokemonListResponse>(
-        `${this.pokeApiBaseUrl}/pokemon?limit=150`,
+      const enrichedPokemon = await Promise.all(
+        mongoData.map(async (pokemon) => {
+          // If details are missing, fetch and save them
+          if (!pokemon.details) {
+            const detailedData = await this.fetchAndSavePokemonDetails(pokemon);
+            pokemon.details = detailedData?.details;
+          }
+          return {
+            name: pokemon.name,
+            url: pokemon.url,
+            isFav: pokemon.isFav,
+            isViewed: pokemon.isViewed,
+            details: pokemon.details, // include the enriched details!
+          };
+        }),
       );
 
-      // Transform the data before saving to MongoDB
-      const pokemonToSave = response.data.results.map((pokemon) => ({
-        name: pokemon.name,
-        url: pokemon.url,
-        isFav: false,
-        isViewed: false,
-      }));
-
-      //save to mongo
-      const savedPokemon = await this.pokemonModel.insertMany(pokemonToSave);
-
-      // Return paginated results with MongoDB _id
-      return savedPokemon.slice(offset, offset + limit).map((pokemon) => ({
-        _id: pokemon._id.toString(),
-        name: pokemon.name,
-        url: pokemon.url,
-        isFav: pokemon.isFav,
-        isViewed: pokemon.isViewed,
-      }));
+      return enrichedPokemon;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
@@ -152,7 +156,19 @@ export class PokemonService {
     }
   }
 
-  async getPokemonDetails(pokemonId: string): Promise<PokemonDetail> {
+  async fetchAndSavePokemonDetails(pokemon: Pokemon) {
+    const response = await axios.get(pokemon.url);
+    const details = response.data;
+
+    await this.pokemonModel.updateOne(
+      { _id: pokemon._id },
+      { $set: { details } },
+    );
+
+    return { details };
+  }
+
+  async getPokemonDetails(pokemonId: string): Promise<any> {
     try {
       // First check if we already have the details in our database
       const existingDetail = await this.pokemonDetailModel

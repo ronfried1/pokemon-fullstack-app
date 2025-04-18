@@ -1,71 +1,34 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-@Schema()
+@Schema({ timestamps: true })
 export class Pokemon extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({ required: true })
   url: string;
 
-  @Prop({ required: true, default: false })
+  @Prop({ default: false })
   isFav: boolean;
 
-  @Prop({ required: true, default: false })
+  @Prop({ default: false })
   isViewed: boolean;
+
+  @Prop({ type: Object })
+  details?: any; // Save full fetched details if available
 }
 
 export const PokemonSchema = SchemaFactory.createForClass(Pokemon);
 
-// Schema for Pokemon details
-@Schema()
+@Schema({ timestamps: true })
 export class PokemonDetail extends Document {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Pokemon', required: true })
-  pokeId: MongooseSchema.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Pokemon', required: true })
+  pokeId: Types.ObjectId;
 
   @Prop({ type: Object, required: true })
-  details: {
-    id: number;
-    name: string;
-    types: string[];
-    abilities: string[];
-    height: number;
-    weight: number;
-    stats: {
-      hp: number;
-      attack: number;
-      defense: number;
-      specialAttack: number;
-      specialDefense: number;
-      speed: number;
-    };
-    sprites: {
-      front: string;
-      back?: string;
-    };
-    evolutions?: {
-      id: number;
-      name: string;
-      sprite: string;
-      condition?: string;
-    }[];
-  };
+  details: any;
 }
 
 export const PokemonDetailSchema = SchemaFactory.createForClass(PokemonDetail);
 
-// Viewed schema
-@Schema()
-export class Viewed extends Document {
-  @Prop({ required: true })
-  userId: MongooseSchema.Types.ObjectId; // The user who viewed
-
-  @Prop({ type: Object })
-  details: object; // Can store view metadata like timestamp
-
-  @Prop({ required: true })
-  pokeId: MongooseSchema.Types.ObjectId; // Reference to Pokemon
-}
-
-export const ViewedSchema = SchemaFactory.createForClass(Viewed);
