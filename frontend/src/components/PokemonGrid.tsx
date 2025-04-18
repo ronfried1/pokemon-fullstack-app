@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { PokemonCard } from "./pokemon-card";
-import PokemonDetails from "./PokemonDetails";
 import { loadMorePokemon } from "../store/pokemonSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { Pokemon } from "../types/pokemon";
+import { PokemonCardSkeleton } from "./PokemonCardSkeleton";
 
 // Loading indicator component
 const LoadingSpinner = () => (
@@ -30,7 +29,7 @@ const EmptyState = () => (
 
 const PokemonGrid: React.FC = () => {
   // const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const { filteredList, status, error, hasMore } = useAppSelector(
+  const { filteredList, status, error, hasMore, limit } = useAppSelector(
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();
@@ -77,24 +76,23 @@ const PokemonGrid: React.FC = () => {
   if (status === "succeeded" && filteredList.length === 0) {
     return <EmptyState />;
   }
-  const pokemonCards = filteredList.map((pokemon, index) => (
-    <PokemonCard key={pokemon._id} pokemon={pokemon} index={index} />
-  ));
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {pokemonCards}
-        </div>
-      </AnimatePresence>
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {filteredList.map((pokemon, index) => (
+          <PokemonCard
+            key={pokemon._id}
+            pokemon={pokemon}
+            index={index % limit}
+          />
+        ))}
+      </div>
       {hasMore && (
         <div ref={observerRef}>
           {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />}
         </div>
       )}
-
       {/* <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} /> */}
     </>
   );
