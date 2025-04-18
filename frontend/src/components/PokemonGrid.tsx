@@ -22,7 +22,7 @@ const EmptyState = () => (
 );
 
 const PokemonGrid: React.FC = () => {
-  const { filteredList, status, error, hasMore, limit } = useAppSelector(
+  const { filteredList, status, hasMore, limit } = useAppSelector(
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();

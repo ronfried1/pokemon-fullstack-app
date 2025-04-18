@@ -22,7 +22,7 @@ export const fetchAllPokemon = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { pokemon: PokemonState };
-      const { page, limit } = state.pokemon;
+      const { limit } = state.pokemon;
       return await pokemonApi.getAll(0, limit);
     } catch (error) {
       return rejectWithValue("Failed to fetch Pokemon");

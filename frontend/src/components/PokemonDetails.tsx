@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-} from "lucide-react";
+import { useAppSelector } from "../store/hooks";
+import { ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "./ui/badge";
@@ -18,7 +12,6 @@ interface PokemonDetailsProps {
 }
 
 const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
-  const dispatch = useAppDispatch();
   const details = useAppSelector(
     (state) => state.pokemon.selectedPokemon?.details
   );
@@ -26,20 +19,20 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
     (state) => state.pokemon.status === "loading"
   );
 
-  const favorites = useAppSelector((state) => state.favorites.list);
+  // const favorites = useAppSelector((state) => state.favorites.list);
 
   if (!details) return null;
 
   // const { details } = pokemon;
   // const isFavorite = favorites.includes(details.name);
 
-  const handleToggleFavorite = () => {
-    // if (isFavorite) {
-    //   dispatch(removeFavorite(details.name));
-    // } else {
-    //   dispatch(addFavorite(details.name));
-    // }
-  };
+  // const handleToggleFavorite = () => {
+  //   if (isFavorite) {
+  //     dispatch(removeFavorite(details.name));
+  //   } else {
+  //     dispatch(addFavorite(details.name));
+  //   }
+  // };
 
   const toggleFavorite = () => {
     // setIsFavorite(!isFavorite)

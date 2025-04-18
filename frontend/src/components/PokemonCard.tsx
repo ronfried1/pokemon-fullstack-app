@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Pokemon } from "../types/pokemon";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { selectPokemon, fetchPokemonDetails } from "../store/pokemonSlice";
+import { fetchPokemonDetails } from "../store/pokemonSlice";
 import { addFavorite, removeFavorite } from "../store/favoritesSlice";
 
 interface PokemonCardProps {

@@ -10,8 +10,8 @@ export function PokemonLoader() {
         }}
         transition={{
           repeat: Infinity,
-          repeatType: "loop",
-          duration: 0.8,
+          repeatType: "mirror",
+          duration: 0.7,
           ease: "easeInOut",
         }}
       />
