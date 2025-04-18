@@ -29,37 +29,38 @@ const EmptyState = () => (
 );
 
 const PokemonGrid: React.FC = () => {
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  // const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { filteredList, status, error, hasMore } = useAppSelector(
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();
-  const { ref: observerRef, inView } = useInView({
-    threshold: 0.2,
-    rootMargin: "100px",
-  });
-
-  const [visiblePokemon, setVisiblePokemon] = useState<Pokemon[]>(filteredList);
+  const { ref: observerRef, inView } = useInView();
+  // const [visiblePokemon, setVisiblePokemon] = useState<Pokemon[]>(filteredList);
 
   const isInitialLoading =
     (status === "idle" || status === "loading") && filteredList.length === 0;
   const isLoadingMore = status === "loading" && filteredList.length > 0;
 
-  // Open and close details
-  const openDetails = useCallback(() => setIsDetailsOpen(true), []);
-  const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
+  // // Open and close details
+  // const openDetails = useCallback(() => setIsDetailsOpen(true), []);
+  // const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
 
   // Infinite scroll trigger
+
   useEffect(() => {
-    if (inView && hasMore && !isLoadingMore) {
-      dispatch(loadMorePokemon());
-    }
+    const debounceTimer = setTimeout(() => {
+      if (inView && hasMore && !isLoadingMore) {
+        dispatch(loadMorePokemon());
+      }
+    }, 200); // 200ms debounce
+
+    return () => clearTimeout(debounceTimer);
   }, [inView, hasMore, dispatch, isLoadingMore]);
 
-  // Update visible list
-  useEffect(() => {
-    setVisiblePokemon(filteredList);
-  }, [filteredList]);
+  // // Update visible list
+  // useEffect(() => {
+  //   setVisiblePokemon(filteredList);
+  // }, [filteredList]);
 
   if (isInitialLoading) {
     return <LoadingSpinner />;
@@ -73,36 +74,19 @@ const PokemonGrid: React.FC = () => {
     );
   }
 
-  if (visiblePokemon.length === 0 && status === "succeeded") {
+  if (status === "succeeded" && filteredList.length === 0) {
     return <EmptyState />;
   }
+  const pokemonCards = filteredList.map((pokemon, index) => (
+    <PokemonCard key={pokemon._id} pokemon={pokemon} index={index} />
+  ));
 
   return (
     <>
       <AnimatePresence mode="wait">
-        <motion.div
-          key="pokemon-grid"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 p-4"
-        >
-          {visiblePokemon.map((pokemon, index) => (
-            <motion.div
-              key={pokemon._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                transition: { delay: index * 0.02 },
-              }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <PokemonCard pokemon={pokemon} />
-            </motion.div>
-          ))}
-        </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {pokemonCards}
+        </div>
       </AnimatePresence>
 
       {hasMore && (
@@ -111,7 +95,7 @@ const PokemonGrid: React.FC = () => {
         </div>
       )}
 
-      <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} />
+      {/* <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} /> */}
     </>
   );
 };

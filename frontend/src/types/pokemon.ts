@@ -1,3 +1,5 @@
+import { JSX } from "react";
+
 export interface Pokemon {
   _id: string; // ObjectId
   name: string;
@@ -51,6 +53,8 @@ export interface Evolution {
   sprite: string;
   condition?: string;
 }
+
+export type PokemonCard = JSX.Element;
 
 export interface PokemonState {
   list: Pokemon[];

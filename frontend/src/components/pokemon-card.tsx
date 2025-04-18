@@ -32,7 +32,13 @@ const typeColors: Record<string, string> = {
   fairy: "bg-gradient-to-r from-pink-400 to-pink-300",
 };
 
-export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
+export function PokemonCard({
+  pokemon,
+  index,
+}: {
+  pokemon: Pokemon;
+  index: number;
+}) {
   const [isFavorite, setIsFavorite] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -126,6 +132,19 @@ export function PokemonCard({ pokemon }: { pokemon: Pokemon }) {
       onMouseLeave={resetRotation}
       whileHover={{ scale: 1.05, zIndex: 10 }}
       whileTap={{ scale: 0.98 }}
+      // initial="hidden"
+      // animate="visible"
+      // transition={{
+      //   delay: index * 0.25,
+      //   ease: "easeInOut",
+      //   duration: 0.5,
+      // }}
+      // viewport={{ amount: 0 }}
+      // variants={{
+      //   hidden: { opacity: 0, y: 75 },
+      //   visible: { opacity: 1, y: 0 },
+      // }}
+      // exit={{ opacity: 0, y: -20 }}
     >
       <motion.div
         style={{

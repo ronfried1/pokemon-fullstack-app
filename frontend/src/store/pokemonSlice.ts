@@ -12,7 +12,7 @@ const initialState: PokemonState = {
   searchQuery: "",
   page: 1,
   hasMore: true,
-  limit: 15,
+  limit: 12,
   totalCount: 0,
 };
 
@@ -34,6 +34,7 @@ export const loadMorePokemon = createAsyncThunk(
   "pokemon/loadMore",
   async (_, { getState, rejectWithValue }) => {
     try {
+      console.log("loadMorePokemon: Loading...");
       const state = getState() as { pokemon: PokemonState };
       const { page, limit, list } = state.pokemon;
       const offset = page * limit;
@@ -47,6 +48,25 @@ export const loadMorePokemon = createAsyncThunk(
       }
     } catch (error) {
       return rejectWithValue("Failed to load more Pokemon");
+    }
+  }
+);
+
+export const fetchPokemonCards = createAsyncThunk(
+  "pokemon/fetchCards",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { pokemon: PokemonState };
+      const { page, limit } = state.pokemon;
+
+      const response = await fetch(
+        `/api/pokemon?offset=${page * limit}&limit=${limit}`
+      );
+      const pokemons: Pokemon[] = await response.json();
+
+      return pokemons;
+    } catch (error) {
+      return rejectWithValue("Failed to fetch Pokémon cards");
     }
   }
 );
@@ -218,6 +238,22 @@ const pokemonSlice = createSlice({
         }
       )
       .addCase(fetchPokemonDetails.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as string) || "Unknown error occurred";
+      })
+      .addCase(fetchPokemonCards.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(
+        fetchPokemonCards.fulfilled,
+        (state, action: PayloadAction<Pokemon[]>) => {
+          state.status = "succeeded";
+          state.list = action.payload;
+          state.filteredList = action.payload.slice(0, state.limit);
+          state.hasMore = action.payload.length >= state.limit;
+        }
+      )
+      .addCase(fetchPokemonCards.rejected, (state, action) => {
         state.status = "failed";
         state.error = (action.payload as string) || "Unknown error occurred";
       });
