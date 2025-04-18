@@ -377,6 +377,34 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                     /> */}
                   </div>
                 </div>
+
+                {details.evolutions && details.evolutions.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="mb-2 font-semibold">Evolutions</h3>
+                    <div className="flex flex-wrap justify-center gap-4">
+                      {details.evolutions.map((evolution) => (
+                        <div
+                          key={evolution.id}
+                          className="flex flex-col items-center"
+                        >
+                          <img
+                            src={evolution.sprite}
+                            alt={evolution.name}
+                            className="h-24 w-24"
+                          />
+                          <p className="text-center capitalize">
+                            {evolution.name}
+                          </p>
+                          {evolution.condition && (
+                            <span className="text-xs text-gray-500">
+                              {evolution.condition}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
@@ -387,243 +415,3 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 };
 
 export default PokemonDetails;
-
-// "use client";
-
-// import { useState } from "react";
-
-// import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
-// import { Dialog, DialogContent } from "@/components/ui/dialog";
-// import { Badge } from "@/components/ui/badge";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// interface PokemonDialogProps {
-//   open: boolean;
-//   onClose: (open: boolean) => void;
-//   pokemon?: {
-//     id: number;
-//     name: string;
-//     types: string[];
-//     description: string;
-//     height: number;
-//     weight: number;
-//     baseExperience: number;
-//     skills: string[];
-//     image: string;
-//     moves: string[];
-//   };
-// }
-
-// export function PokemonDialog({ open, onClose, pokemon }: PokemonDialogProps) {
-//   const [isFavorite, setIsFavorite] = useState(false);
-
-//   if (!pokemon) return null;
-
-//   const toggleFavorite = () => {
-//     setIsFavorite(!isFavorite);
-//   };
-
-//   return (
-//     <Dialog onClose={() => onClose(false)} isOpen={true}>
-//       <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
-//         <div className="grid md:grid-cols-2">
-//           {/* Left side - Pokemon image and details */}
-//           <div className="flex flex-col">
-//             <div className="relative bg-green-500 p-6">
-//               <button
-//                 onClick={toggleFavorite}
-//                 className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white"
-//               >
-//                 <Heart
-//                   className={`h-5 w-5 ${
-//                     isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-//                   }`}
-//                 />
-//               </button>
-
-//               <div className="absolute left-4 top-1/2 -translate-y-1/2">
-//                 <button className="p-2 rounded-full bg-white/80 hover:bg-white">
-//                   <ChevronLeft className="h-5 w-5" />
-//                 </button>
-//               </div>
-
-//               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-//                 <button className="p-2 rounded-full bg-white/80 hover:bg-white">
-//                   <ChevronRight className="h-5 w-5" />
-//                 </button>
-//               </div>
-
-//               <div className="flex justify-center items-center h-[300px]">
-//                 <img
-//                   src={pokemon.image || "/placeholder.svg?height=250&width=250"}
-//                   width={250}
-//                   height={250}
-//                   className="object-contain"
-//                   alt={pokemon.name}
-//                 />
-//               </div>
-//             </div>
-
-//             <div className="p-6 bg-white">
-//               <div className="flex justify-between items-center mb-4">
-//                 <h1 className="text-2xl font-bold capitalize">
-//                   {pokemon.name}
-//                 </h1>
-//                 <span className="text-lg font-semibold text-gray-600">
-//                   #{pokemon.id}
-//                 </span>
-//               </div>
-
-//               <div className="flex gap-2 mb-4">
-//                 {pokemon.types.map((type) => (
-//                   <Badge
-//                     key={type}
-//                     className={`${
-//                       type === "grass" ? "bg-green-500" : "bg-purple-500"
-//                     } text-white px-3 py-1`}
-//                   >
-//                     {type}
-//                   </Badge>
-//                 ))}
-//               </div>
-
-//               <p className="text-gray-700 mb-6">{pokemon.description}</p>
-
-//               <div className="grid grid-cols-2 gap-6">
-//                 <div>
-//                   <h3 className="font-semibold mb-2 text-gray-700">Height</h3>
-//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.height} m</p>
-//                 </div>
-//                 <div>
-//                   <h3 className="font-semibold mb-2 text-gray-700">Weight</h3>
-//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.weight} kg</p>
-//                 </div>
-//                 <div>
-//                   <h3 className="font-semibold mb-2 text-gray-700">
-//                     Base Experience
-//                   </h3>
-//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.baseExperience}</p>
-//                 </div>
-//                 <div>
-//                   <h3 className="font-semibold mb-2 text-gray-700">Skills</h3>
-//                      <p className="text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">{pokemon.skills.join(", ")}</p>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Right side - Tabs */}
-//           <div className="bg-gray-50 p-6">
-//             <Tabs defaultValue="movements">
-//               <TabsList className="grid w-full grid-cols-3 mb-8">
-//                 <TabsTrigger
-//                   value="statistics"
-//                   className="data-[state=active]:bg-white"
-//                 >
-//                   Statistics
-//                 </TabsTrigger>
-//                 <TabsTrigger
-//                   value="movements"
-//                   className="data-[state=active]:bg-white data-[state=active]:text-red-500 data-[state=active]:border-b-2 data-[state=active]:border-red-500"
-//                 >
-//                   Movements
-//                 </TabsTrigger>
-//                 <TabsTrigger
-//                   value="evolution"
-//                   className="data-[state=active]:bg-white"
-//                 >
-//                   Evolution
-//                 </TabsTrigger>
-//               </TabsList>
-
-//               <TabsContent value="statistics">
-//                 <div className="space-y-4">
-//                   <h2 className="text-xl font-bold mb-4">Statistics</h2>
-//                   {/* Add statistics content here */}
-//                 </div>
-//               </TabsContent>
-
-//               <TabsContent value="movements">
-//                 <div>
-//                   <h2 className="text-xl font-bold mb-6">Movements</h2>
-//                   <div className="grid grid-cols-2 gap-4">
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Razor Wind</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Swords Dance</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Cut</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Bind</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Vine Whip</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Headbutt</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Tackle</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Body Slam</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Take Down</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Double Edge</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Growl</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Strength</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Mega Drain</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Leech Seed</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Growth</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Razor Leaf</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Solar Beam</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Poison Powder</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Sleep Powder</span>
-//                     </div>
-//                     <div className="bg-gray-100 rounded-lg p-4">
-//                       <span>Petal Dance</span>
-//                     </div>
-//                   </div>
-//                   <p className="text-sm text-gray-500 mt-4 text-center">
-//                     Showing 20 of 86 moves
-//                   </p>
-//                 </div>
-//               </TabsContent>
-
-//               <TabsContent value="evolution">
-//                 <div className="space-y-4">
-//                   <h2 className="text-xl font-bold mb-4">Evolution</h2>
-//                   {/* Add evolution content here */}
-//                 </div>
-//               </TabsContent>
-//             </Tabs>
-//           </div>
-//         </div>
-//       </DialogContent>
-//     </Dialog>
-//   );
-// }

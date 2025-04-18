@@ -184,7 +184,7 @@ export function PokemonCard({
     > */}
           <Card
             onClick={handleClick}
-            className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-white/90 backdrop-blur-sm transition-all duration-300"
+            className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-card dark:bg-card/50 backdrop-blur-sm transition-all duration-300"
           >
             <div
               className={`relative pt-6 px-6 ${gradientClass} rounded-t-2xl`}
@@ -227,7 +227,7 @@ export function PokemonCard({
                 <h3 className="font-bold text-xl capitalize">
                   {pokemon.name.replace(/-/g, " ")}
                 </h3>
-                <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
+                <span className="text-sm font-medium bg-muted dark:bg-card/50 px-2 py-1 rounded-full">
                   #{pokemon.details.id || "?"}
                 </span>
               </div>

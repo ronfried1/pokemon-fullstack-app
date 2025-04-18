@@ -293,7 +293,7 @@ export class PokemonService {
       pokemon.details = detailData;
       pokemon.isViewed = true;
       await pokemon.save();
-
+      this.logger.log(`getPokemonDetails ${pokemon.details}`);
       return { details: pokemon.details, _id: pokemon._id };
     } catch (error) {
       const errorMessage =

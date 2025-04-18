@@ -5,13 +5,7 @@ import { loadMorePokemon } from "../store/pokemonSlice";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import PokemonDetails from "./PokemonDetails";
-
-// Loading indicator component
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-4">
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-  </div>
-);
+import { PokemonLoader } from "./PokemonLoader";
 
 // Empty state
 const EmptyState = () => (
@@ -54,7 +48,7 @@ const PokemonGrid: React.FC = () => {
   }, [inView, hasMore, dispatch, isLoadingMore]);
 
   if (isInitialLoading) {
-    return <LoadingSpinner />;
+    return <PokemonLoader />;
   }
 
   if (status === "failed") {
@@ -83,6 +77,7 @@ const PokemonGrid: React.FC = () => {
       </div>
       {hasMore && (
         <div ref={observerRef}>
+          {isLoadingMore ? <PokemonLoader /> : <div className="h-8" />}
           {/* {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />} */}
         </div>
       )}

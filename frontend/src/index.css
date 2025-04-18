@@ -112,4 +112,44 @@
   body {
     @apply bg-background text-foreground;
   }
+  .pokeball-loader {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    position: relative;
+    background: linear-gradient(to bottom, #eeeeee 0%, #ffffff 100%);
+    border: 2px solid black;
+    box-shadow: 0 0 0 4px #ddd, 0 0 0 6px black;
+  }
+  
+  .pokeball-loader::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to bottom, #d10000 0%, #ff0000 100%);
+    border-bottom: 2px solid black;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+  }
+  
+  .pokeball-loader::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(to bottom, #ffffff 0%, #cccccc 100%);
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 2px black,
+      0 0 0 4px #ddd,
+      0 0 0 6px black,
+      0 0 6px 3px rgba(0, 0, 0, 0.3);
+  }
+  
 }
