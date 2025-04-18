@@ -131,6 +131,7 @@ export class PokemonService {
             pokemon.details = detailedData?.details;
           }
           return {
+            _id: pokemon._id,
             name: pokemon.name,
             url: pokemon.url,
             isFav: pokemon.isFav,
@@ -192,6 +193,7 @@ export class PokemonService {
       if (existingDetail) {
         return existingDetail;
       }
+      // console.log('pokemonId', typeof pokemonId);
 
       // Find the basic Pokemon info
       const pokemon = await this.pokemonModel.findById(pokemonId).exec();

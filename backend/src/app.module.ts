@@ -40,6 +40,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
         if (useMemoryDB) {
           uri = memoryMongoURI;
         } else if (useLocalMongoDB) {
+          console.log('🔄 Using local MongoDB at:', localMongoURI);
           uri = localMongoURI;
         } else if (mongoURI) {
           uri = mongoURI;
