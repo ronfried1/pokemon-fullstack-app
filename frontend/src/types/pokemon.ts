@@ -50,12 +50,14 @@ export interface PokemonDetail {
         url: string;
       };
     }[];
-    sprites?: {
-      front?: string;
-      back?: string;
-      front_default?: string;
-      back_default?: string;
-      other?: Record<string, any>;
+    sprites: {
+      front: string;
+      back: string;
+      front_default: string;
+      front_shiny: string;
+      back_default: string;
+      back_shiny: string;
+      other: Record<string, any>;
     };
     evolutions?: Evolution[];
     moves: { move: { name: string; url: string } }[]; // Note: backend uses 'movments' instead of 'moves'

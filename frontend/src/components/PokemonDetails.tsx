@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "./ui/badge";
 
 interface PokemonDetailsProps {
@@ -15,6 +21,9 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   const dispatch = useAppDispatch();
   const details = useAppSelector(
     (state) => state.pokemon.selectedPokemon?.details
+  );
+  const isLoading = useAppSelector(
+    (state) => state.pokemon.status === "loading"
   );
 
   const favorites = useAppSelector((state) => state.favorites.list);
@@ -34,6 +43,51 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 
   const toggleFavorite = () => {
     // setIsFavorite(!isFavorite)
+  };
+
+  // Get available images
+  const getAvailableImages = () => {
+    if (!details) return [];
+
+    const images = [];
+
+    if (details.sprites?.other?.["official-artwork"]?.front_default) {
+      images.push(details.sprites.other["official-artwork"].front_default);
+    }
+
+    if (details.sprites.front_default) {
+      images.push(details.sprites.front_default);
+    }
+
+    if (details.sprites.back_default) {
+      images.push(details.sprites.back_default);
+    }
+
+    if (details.sprites.front_shiny) {
+      images.push(details.sprites.front_shiny);
+    }
+
+    if (details.sprites.back_shiny) {
+      images.push(details.sprites.back_shiny);
+    }
+
+    return images;
+  };
+
+  const images = getAvailableImages();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const nextImage = () => {
+    setActiveImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+  const imageVariants = {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
   };
 
   const typeColors: Record<string, string> = {
@@ -59,6 +113,20 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   const mainType = details.types?.[0]?.type.name || "normal";
   const gradientClass =
     typeColors[mainType] || "bg-gradient-to-r from-gray-400 to-gray-500";
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="relative w-20 h-20">
+          <div className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-t-red-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+          <div className="absolute top-2 left-2 w-16 h-16 rounded-full border-4 border-t-transparent border-r-yellow-500 border-b-transparent border-l-transparent animate-spin"></div>
+          <div className="absolute top-4 left-4 w-12 h-12 rounded-full border-4 border-t-transparent border-r-transparent border-b-blue-500 border-l-transparent animate-spin"></div>
+          <div className="absolute top-6 left-6 w-8 h-8 rounded-full border-4 border-t-transparent border-r-transparent border-b-transparent border-l-green-500 animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogTitle className="hidden">
@@ -68,42 +136,76 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
         <div className="grid md:grid-cols-2">
           {/* Left side - Pokemon image and details */}
           <div className="flex flex-col">
-            <div className={`relative ${gradientClass} p-6`}>
-              <button
+            <div
+              className={`relative ${gradientClass} p-8 flex justify-center items-center min-h-[350px]`}
+            >
+              <motion.button
                 onClick={toggleFavorite}
-                className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white"
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.8 }}
               >
                 <Heart
                   className={`h-5 w-5 ${
                     false ? "fill-red-500 text-red-500" : "text-gray-400"
                   }`}
                 />
-              </button>
+              </motion.button>
 
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <button className="p-2 rounded-full bg-white/80 hover:bg-white">
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-              </div>
+              {images.length > 1 && (
+                <>
+                  <motion.button
+                    onClick={prevImage}
+                    className="absolute left-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-700" />
+                  </motion.button>
 
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <button className="p-2 rounded-full bg-white/80 hover:bg-white">
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="flex justify-center items-center h-[300px]">
-                <img
-                  src={
-                    details.sprites?.other?.["official-artwork"]
-                      ?.front_default || "/placeholder.svg?height=250&width=250"
-                  }
-                  width={250}
-                  height={250}
-                  className="object-contain"
-                  alt={details.name}
-                />
-              </div>
+                  <motion.button
+                    onClick={nextImage}
+                    className="absolute right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    <ArrowRight className="h-5 w-5 text-gray-700" />
+                  </motion.button>
+                </>
+              )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeImageIndex}
+                  variants={imageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="flex justify-center"
+                >
+                  <motion.div
+                    animate={{
+                      y: [0, -10, 0],
+                      rotate: [0, 2, 0, -2, 0],
+                    }}
+                    transition={{
+                      repeat: Number.POSITIVE_INFINITY,
+                      duration: 5,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <img
+                      src={
+                        images[activeImageIndex] ||
+                        "/placeholder.svg?height=250&width=250"
+                      }
+                      width={250}
+                      height={250}
+                      className="object-contain"
+                      alt={details.name}
+                    />
+                  </motion.div>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <div className="p-6 bg-white">
@@ -261,7 +363,19 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <TabsContent value="evolution">
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold mb-4">Evolution</h2>
-                  {/* Add evolution content here */}
+                  Evolution Chain
+                  <p className="text-gray-600 mb-4">
+                    Evolution information not available in this version.
+                  </p>
+                  <div className="flex justify-center">
+                    {/* <Image
+                      src="/placeholder.svg?height=200&width=200"
+                      alt="Evolution chain"
+                      width={200}
+                      height={200}
+                      className="opacity-50"
+                    /> */}
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
