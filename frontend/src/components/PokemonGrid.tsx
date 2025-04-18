@@ -1,12 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-// import PokemonCard from "./PokemonCard";
 import { PokemonCard } from "./pokemon-card";
 import PokemonDetails from "./PokemonDetails";
 import { loadMorePokemon } from "../store/pokemonSlice";
@@ -16,23 +9,23 @@ import { Pokemon } from "../types/pokemon";
 
 // Loading indicator component
 const LoadingSpinner = () => (
-  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+  <div className="flex justify-center items-center p-4">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+  </div>
 );
 
-// Empty state component
+// Empty state
 const EmptyState = () => (
-  <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
-    <p className="mb-2 text-lg font-semibold">No Pokémon Found</p>
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.5 }}
+    className="flex flex-col items-center justify-center p-20 text-gray-600"
+  >
+    <h2 className="text-2xl font-bold mb-4">No Pokémon Found</h2>
     <p>Try adjusting your search or filters.</p>
-  </div>
-);
-
-// Error state component
-const ErrorState = ({ error }: { error: string | null }) => (
-  <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center text-red-800">
-    <p>Error: {error}</p>
-    <p>Please try again later or contact support if the problem persists.</p>
-  </div>
+  </motion.div>
 );
 
 const PokemonGrid: React.FC = () => {
@@ -41,93 +34,46 @@ const PokemonGrid: React.FC = () => {
     (state) => state.pokemon
   );
   const dispatch = useAppDispatch();
-  const isLoadingRef = useRef(false);
-  const [visiblePokemon, setVisiblePokemon] = useState<Pokemon[]>(filteredList);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const hasLoadedDataRef = useRef(false);
-  const [showContent, setShowContent] = useState(false);
-
-  // Intersection observer setup
   const { ref: observerRef, inView } = useInView({
-    threshold: 0.1,
+    threshold: 0.2,
     rootMargin: "100px",
-    triggerOnce: false,
   });
 
-  // Unified useEffect for all data handling and UI updates
-  useEffect(() => {
-    // Part 1: Track when we first receive data
-    if (filteredList && filteredList.length > 0 && !hasLoadedDataRef.current) {
-      hasLoadedDataRef.current = true;
+  const [visiblePokemon, setVisiblePokemon] = useState<Pokemon[]>(filteredList);
 
-      // Wait a bit to ensure we don't flash the empty state
-      setTimeout(() => {
-        setShowContent(true);
-      }, 150);
-    }
+  const isInitialLoading =
+    (status === "idle" || status === "loading") && filteredList.length === 0;
+  const isLoadingMore = status === "loading" && filteredList.length > 0;
 
-    // Part 2: Handle loading more data when scrolling
-    if (inView && status !== "loading" && hasMore && !isLoadingRef.current) {
-      console.log("Loading more Pokemon...");
-      isLoadingRef.current = true;
-      dispatch(loadMorePokemon());
-    }
-
-    // Part 3: Track loading state changes
-    isLoadingRef.current = status === "loading";
-
-    // Part 4: Update visible Pokemon with smooth transitions
-    if (filteredList) {
-      if (filteredList.length > 0 && status !== "loading") {
-        // For non-empty lists while not loading, use small delay for smooth transitions
-        setIsUpdating(true);
-        const timer = setTimeout(() => {
-          setVisiblePokemon(filteredList);
-          setIsUpdating(false);
-        }, 100);
-
-        return () => clearTimeout(timer);
-      } else {
-        // For initial loads or empty results, update immediately
-        setVisiblePokemon(filteredList);
-        setIsUpdating(false);
-      }
-    }
-  }, [inView, status, hasMore, filteredList, dispatch]);
-
-  // Event handlers
+  // Open and close details
   const openDetails = useCallback(() => setIsDetailsOpen(true), []);
   const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
 
-  // We're in a loading state if:
-  // 1. Status is loading or idle AND we don't have Pokemon data, OR
-  // 2. We haven't marked the content as ready to show
-  const isLoading =
-    ((status === "idle" || status === "loading") &&
-      visiblePokemon.length === 0) ||
-    (visiblePokemon.length > 0 && !showContent);
+  // Infinite scroll trigger
+  useEffect(() => {
+    if (inView && hasMore && !isLoadingMore) {
+      dispatch(loadMorePokemon());
+    }
+  }, [inView, hasMore, dispatch, isLoadingMore]);
 
-  if (isLoading) {
+  // Update visible list
+  useEffect(() => {
+    setVisiblePokemon(filteredList);
+  }, [filteredList]);
+
+  if (isInitialLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (status === "failed") {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <div className="flex justify-center p-10 text-red-500">
+        Error loading Pokémon. Please try again later.
       </div>
     );
   }
 
-  if (status === "failed") {
-    return <ErrorState error={error} />;
-  }
-
-  // Only show empty state if:
-  // 1. We have no Pokemon to display
-  // 2. The status is "succeeded" (meaning a request completed successfully)
-  // 3. We've already had data before (to avoid the empty flash during initial loading)
-  if (
-    visiblePokemon.length === 0 &&
-    status === "succeeded" &&
-    hasLoadedDataRef.current
-  ) {
+  if (visiblePokemon.length === 0 && status === "succeeded") {
     return <EmptyState />;
   }
 
@@ -140,7 +86,7 @@ const PokemonGrid: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 p-4"
         >
           {visiblePokemon.map((pokemon, index) => (
             <motion.div
@@ -151,8 +97,8 @@ const PokemonGrid: React.FC = () => {
                 y: 0,
                 transition: { delay: index * 0.02 },
               }}
+              exit={{ opacity: 0, y: -20 }}
             >
-              {/* <PokemonCard pokemon={pokemon} onSelect={openDetails} /> */}
               <PokemonCard pokemon={pokemon} />
             </motion.div>
           ))}
@@ -160,12 +106,8 @@ const PokemonGrid: React.FC = () => {
       </AnimatePresence>
 
       {hasMore && (
-        <div ref={observerRef} className="mt-4 flex justify-center p-4">
-          {status === "loading" || isUpdating ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="h-8 w-8"></div>
-          )}
+        <div ref={observerRef}>
+          {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />}
         </div>
       )}
 
