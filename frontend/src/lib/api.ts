@@ -156,6 +156,41 @@ export const pokemonApi = {
     }
   },
 
+  // Search for Pokemon by name
+  searchPokemon: async (query: string, limit = 20): Promise<Pokemon[]> => {
+    try {
+      console.log(`API: Searching Pokemon with query=${query}, limit=${limit}`);
+      const response = await api.get(
+        `/pokemon/search?query=${encodeURIComponent(query)}&limit=${limit}`
+      );
+      console.log(`API Response: Found ${response.data.length} Pokemon`);
+
+      // Map any missing fields with defaults before validation
+      const processedData = response.data.map((pokemon: any) => ({
+        _id: pokemon._id,
+        name: pokemon.name,
+        url: pokemon.url,
+        isFav: pokemon.isFav !== undefined ? pokemon.isFav : false,
+        isViewed: pokemon.isViewed !== undefined ? pokemon.isViewed : false,
+        details: pokemon.details || {},
+      }));
+
+      try {
+        return PokemonListSchema.parse(processedData) as unknown as Pokemon[];
+      } catch (zodError) {
+        console.error("Zod validation error:", zodError);
+        console.log(
+          "Sample data causing the error:",
+          JSON.stringify(processedData[0], null, 2)
+        );
+        throw zodError;
+      }
+    } catch (error) {
+      console.error("Error searching Pokemon:", error);
+      throw error;
+    }
+  },
+
   // Fetch favorite Pokemon
   getFavorites: async (): Promise<string[]> => {
     try {

@@ -199,6 +199,56 @@ export class PokemonService {
     }
   }
 
+  async searchPokemon(query: string, limit = 20): Promise<PokemonResult[]> {
+    const startTime = Date.now();
+    try {
+      // Create a regex pattern for case-insensitive search
+      const searchRegex = new RegExp(query, 'i');
+
+      // Search in MongoDB by name only
+      const mongoData = await this.pokemonModel
+        .find({ name: searchRegex })
+        .limit(limit)
+        .exec();
+
+      // Enrich the data with details if needed
+      const enrichedPokemon = await Promise.all(
+        mongoData.map(async (pokemon) => {
+          // If details are missing, fetch and save them
+          if (!pokemon.details) {
+            const detailedData = await this.fetchAndSavePokemonDetails(pokemon);
+            pokemon.details = detailedData?.details;
+          }
+          return {
+            _id: pokemon._id,
+            name: pokemon.name,
+            url: pokemon.url,
+            isFav: pokemon.isFav,
+            isViewed: pokemon.isViewed,
+            details: pokemon.details,
+          };
+        }),
+      );
+
+      const endTime = Date.now();
+      this.logger.log(
+        `searchPokemon execution time: ${endTime - startTime}ms (query: ${query}, limit: ${limit})`,
+      );
+
+      return enrichedPokemon;
+    } catch (error) {
+      const endTime = Date.now();
+      this.logger.error(
+        `searchPokemon failed after ${endTime - startTime}ms: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+      );
+
+      throw new InternalServerErrorException('Failed to search Pokemon data', {
+        cause: new Error(),
+        description: 'Search Error',
+      });
+    }
+  }
+
   async fetchAndSavePokemonDetails(pokemon: Pokemon) {
     try {
       // Fetch basic details for the list view

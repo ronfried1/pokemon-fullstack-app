@@ -13,6 +13,14 @@ export class PokemonController {
     return this.pokemonService.getAllPokemon(Number(offset), Number(limit));
   }
 
+  @Get('search')
+  async searchPokemon(
+    @Query('query') query: string,
+    @Query('limit') limit = 20,
+  ): Promise<PokemonResult[]> {
+    return this.pokemonService.searchPokemon(query, Number(limit));
+  }
+
   @Get(':id/details')
   async getPokemonDetails(@Param('id') id: string) {
     return this.pokemonService.getPokemonDetails(id);

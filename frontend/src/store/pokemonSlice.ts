@@ -36,14 +36,22 @@ export const loadMorePokemon = createAsyncThunk(
     try {
       console.log("loadMorePokemon: Loading...");
       const state = getState() as { pokemon: PokemonState };
-      const { page, limit, list } = state.pokemon;
+      const { page, limit, list, searchQuery } = state.pokemon;
       const offset = page * limit;
+
+      // If we have a search query active, don't load more
+      if (searchQuery) {
+        console.log("loadMorePokemon: Search active, not loading more");
+        return [];
+      }
 
       // If we already have all the pokemon, no need to fetch more
       if (list.length <= offset) {
+        console.log(`loadMorePokemon: Fetching from API at offset=${offset}`);
         return await pokemonApi.getAll(offset, limit);
       } else {
-        // Just return a slice of the existing data (useful for filtered views)
+        // Just return a slice of the existing data
+        console.log(`loadMorePokemon: Using cached data from offset=${offset}`);
         return list.slice(offset, offset + limit);
       }
     } catch (error) {
@@ -83,6 +91,20 @@ export const fetchPokemonDetails = createAsyncThunk(
   }
 );
 
+// Search Pokemon async thunk
+export const searchPokemon = createAsyncThunk(
+  "pokemon/search",
+  async (query: string, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { pokemon: PokemonState };
+      const { limit } = state.pokemon;
+      return await pokemonApi.searchPokemon(query, limit);
+    } catch (error) {
+      return rejectWithValue("Failed to search Pokémon");
+    }
+  }
+);
+
 // Slice
 const pokemonSlice = createSlice({
   name: "pokemon",
@@ -96,18 +118,11 @@ const pokemonSlice = createSlice({
       state.page = 1; // Reset pagination when search changes
 
       if (action.payload === "") {
+        // If search is cleared, just show the initial list
         state.filteredList = state.list.slice(0, state.limit);
         state.hasMore = state.list.length > state.limit;
-      } else {
-        const query = action.payload.toLowerCase();
-        const allFiltered = state.list.filter(
-          (pokemon) => pokemon.name.toLowerCase().includes(query)
-          // Note: filtering by types is removed as they aren't available in the basic Pokemon object
-        );
-
-        state.filteredList = allFiltered.slice(0, state.limit);
-        state.hasMore = allFiltered.length > state.limit;
       }
+      // The actual search will be handled by the searchPokemon thunk
     },
     filterByFavorites: (state, action: PayloadAction<string[]>) => {
       state.page = 1; // Reset pagination when filters change
@@ -125,10 +140,19 @@ const pokemonSlice = createSlice({
       }
     },
     resetFilters: (state) => {
-      state.page = 1; // Reset pagination when filters are reset
-      state.filteredList = state.list.slice(0, state.limit);
-      state.hasMore = state.list.length > state.limit;
+      // Completely reset the state
+      state.page = 1;
       state.searchQuery = "";
+      state.status = "idle";
+
+      // Start fresh with the initial data
+      if (state.list.length > 0) {
+        state.filteredList = state.list.slice(0, state.limit);
+        state.hasMore = state.list.length > state.limit;
+      } else {
+        state.filteredList = [];
+        state.hasMore = true; // Set to true so we try to fetch data
+      }
     },
   },
   extraReducers: (builder) => {
@@ -252,6 +276,22 @@ const pokemonSlice = createSlice({
         }
       )
       .addCase(fetchPokemonCards.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as string) || "Unknown error occurred";
+      })
+      // Add cases for the search thunk
+      .addCase(searchPokemon.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(
+        searchPokemon.fulfilled,
+        (state, action: PayloadAction<Pokemon[]>) => {
+          state.status = "succeeded";
+          state.filteredList = action.payload;
+          state.hasMore = action.payload.length >= state.limit;
+        }
+      )
+      .addCase(searchPokemon.rejected, (state, action) => {
         state.status = "failed";
         state.error = (action.payload as string) || "Unknown error occurred";
       });
