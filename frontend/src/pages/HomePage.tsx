@@ -40,7 +40,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-4 text-2xl font-bold">All Pokémon</h1>
+        <h1 className="mb-4 text-2xl font-bold">Gotta Catch 'Em All</h1>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-grow">
             <SearchBar />

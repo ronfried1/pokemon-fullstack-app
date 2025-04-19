@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Button } from "./ui/button";
+import { ModeToggle } from "./ModeToggle";
 // import { useAppSelector } from "../store/hooks";
 
 const NavBar: React.FC = () => {
@@ -12,6 +12,13 @@ const NavBar: React.FC = () => {
           <h1 className="mr-6 text-xl font-bold text-foreground">
             Pokémon Manager
           </h1>
+          {/* <div className="flex items-center mr-6">
+            <img
+              src="/assets/logo.webp"
+              alt="Pokémon Manager Logo"
+              className="max-h-16 w-36 mr-2"
+            />
+          </div> */}
           <nav className="flex space-x-4">
             <NavLink
               to="/"
@@ -43,7 +50,7 @@ const NavBar: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button
+          {/* <Button
             variant="outline"
             onClick={() => {
               document.documentElement.classList.toggle("dark");
@@ -73,7 +80,9 @@ const NavBar: React.FC = () => {
               <path d="m6.34 17.66-1.41 1.41"></path>
               <path d="m19.07 4.93-1.41 1.41"></path>
             </svg>
-          </Button>
+          </Button> */}
+
+          <ModeToggle />
         </div>
       </div>
     </header>
