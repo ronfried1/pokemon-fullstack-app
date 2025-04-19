@@ -78,7 +78,6 @@ const PokemonGrid: React.FC = () => {
       {hasMore && (
         <div ref={observerRef}>
           {isLoadingMore ? <PokemonLoader /> : <div className="h-8" />}
-          {/* {isLoadingMore ? <LoadingSpinner /> : <div className="h-8" />} */}
         </div>
       )}
       <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} />
