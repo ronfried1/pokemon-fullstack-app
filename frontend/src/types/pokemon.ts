@@ -57,7 +57,7 @@ export interface PokemonDetail {
       front_shiny: string;
       back_default: string;
       back_shiny: string;
-      other: Record<string, any>;
+      front_artwork: string;
     };
     evolutions?: Evolution[];
     moves: { move: { name: string; url: string } }[]; // Note: backend uses 'movments' instead of 'moves'

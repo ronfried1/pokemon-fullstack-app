@@ -136,7 +136,7 @@ export const pokemonApi = {
     try {
       console.log("API Response:", pokemonId);
       const response = await api.get(`/pokemon/${pokemonId}/details`);
-      console.log("API Response:", response.data);
+      console.log("API Respons getPokemonDetails:", response.data);
       try {
         // The response now comes directly from the Pokemon document
         return PokemonDetailSchema.parse(

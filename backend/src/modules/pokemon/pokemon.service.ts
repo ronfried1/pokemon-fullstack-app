@@ -14,7 +14,15 @@ export interface PokemonResult {
   url: string;
   isFav: boolean;
   isViewed: boolean;
-  details: any;
+  details: {
+    id: number;
+    name: string;
+    types: any[];
+    sprites: any;
+    stats: any[];
+    species: { url: string };
+    moves: any[];
+  };
 }
 
 interface PokemonListResponse {
@@ -53,7 +61,9 @@ interface EvolutionData {
   condition?: string;
 }
 
-// Add missing interfaces
+export type PokemonSpritesOther = Record<string, Record<string, string | null>>;
+
+// Update PokemonApiResponse interface to include all needed fields
 interface PokemonApiResponse {
   id: number;
   name: string;
@@ -69,26 +79,36 @@ interface PokemonApiResponse {
   }[];
   height: number;
   weight: number;
+  base_experience: number;
   stats: {
     base_stat: number;
+    effort: number;
     stat: {
       name: string;
+      url: string;
     };
   }[];
   sprites: {
-    front_default: string;
+    back_shiny: string;
     back_default: string;
+    other: PokemonSpritesOther;
+    versions: {
+      'generation-v': {
+        'black-white': {
+          animated: {
+            back_default: string;
+            front_default: string;
+            back_shiny: string;
+            front_shiny: string;
+          };
+        };
+      };
+    };
   };
   species: {
     url: string;
   };
   moves: any[];
-}
-
-interface PokemonSpeciesResponse {
-  evolution_chain: {
-    url: string;
-  };
 }
 
 interface EvolutionChainResponse {
@@ -181,14 +201,54 @@ export class PokemonService {
 
   async fetchAndSavePokemonDetails(pokemon: Pokemon) {
     try {
-      const response = await axios.get(pokemon.url);
-      const details = response.data;
+      // Fetch basic details for the list view
+      const response = await axios.get<PokemonApiResponse>(pokemon.url);
+      const basicDetails = response.data;
 
-      // Update the Pokemon document with the details
-      pokemon.details = details;
+      // Store necessary data for Pokemon cards
+      const simplifiedDetails = {
+        id: basicDetails.id,
+        name: basicDetails.name,
+        // Include full types data structure for the card component
+        types: basicDetails.types,
+        height: basicDetails.height,
+        weight: basicDetails.weight,
+        base_experience: basicDetails.base_experience,
+        abilities: basicDetails.abilities,
+        moves: basicDetails.moves,
+
+        // Include full sprites object with all variations
+        sprites: {
+          front:
+            basicDetails.sprites.other.dream_world.front_default ||
+            basicDetails.sprites.other['official-artwork'].front_default ||
+            basicDetails.sprites.other.home.front_default,
+          back:
+            basicDetails.sprites.back_default ||
+            basicDetails.sprites.versions['generation-v']['black-white']
+              .animated.back_default,
+          front_shiny:
+            basicDetails.sprites.other.home.front_shiny ||
+            basicDetails.sprites.versions['generation-v']['black-white']
+              .animated.front_shiny,
+          back_shiny:
+            basicDetails.sprites.back_shiny ||
+            basicDetails.sprites.versions['generation-v']['black-white']
+              .animated.back_shiny,
+          front_artwork:
+            basicDetails.sprites.other['official-artwork'].front_default,
+        },
+        // Add base stats that might be displayed in the card
+        stats: basicDetails.stats,
+
+        // Don't include evolutions or full move data to keep it lightweight
+      };
+
+      // Update the Pokemon document with the simplified details
+      pokemon.details = simplifiedDetails;
       await pokemon.save();
 
-      return { details };
+      return { details: simplifiedDetails };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -199,7 +259,7 @@ export class PokemonService {
 
   async getPokemonDetails(pokemonId: string): Promise<any> {
     try {
-      this.logger.log(`getPokemonDetails execution time: ${Date.now()}`);
+      this.logger.log(`getPokemonDetails ${pokemonId} ${Date.now()}`);
 
       // Find the Pokemon by ID
       const pokemon = await this.pokemonModel
@@ -209,96 +269,93 @@ export class PokemonService {
         throw new NotFoundException(`Pokemon with ID ${pokemonId} not found`);
       }
 
+      // Define a type for our Pokemon details to avoid unsafe member access
+      interface PokemonDetailsType {
+        id?: number;
+        name?: string;
+        types?: any[];
+        abilities?: any[];
+        stats?: any[];
+        sprites?: any;
+        species?: { url: string };
+        moves?: any[];
+        evolutions?: EvolutionData[];
+        height?: number;
+        weight?: number;
+        base_experience?: number;
+      }
+
+      // Type assertion for details
+      const details = pokemon.details as PokemonDetailsType | undefined;
       this.logger.log(
         `getPokemonDetails execution time: ${Date.now()}`,
         pokemon._id,
+        details?.id,
+        details?.evolutions,
       );
 
-      // If we already have details, return them
-      if (pokemon.details) {
+      // If we have full details with evolutions, just return them
+      if (
+        pokemon.isViewed &&
+        details &&
+        details.evolutions &&
+        details.evolutions.length > 0
+      ) {
         this.logger.log(
           `getPokemonDetails returning existing details: ${Date.now()}`,
         );
         return { details: pokemon.details, _id: pokemon._id };
       }
 
-      // Extract the Pokemon number from the URL
-      const urlParts = pokemon.url.split('/');
-      const pokeNumber = urlParts[urlParts.length - 2];
-
-      // Fetch detailed information from PokeAPI
-      const response = await axios.get<PokemonApiResponse>(
-        `${this.pokeApiBaseUrl}/pokemon/${pokeNumber}`,
-      );
-
-      // Get species data for evolutions
-      const speciesResponse = await axios.get<PokemonSpeciesResponse>(
-        response.data.species.url,
-      );
-
-      // Fetch evolution chain if available
+      // We already have basic details, so we just need to add evolutions and moves
+      const pokemonDetails: PokemonDetailsType = details || {};
       let evolutionChain: EvolutionData[] = [];
-      if (speciesResponse.data.evolution_chain) {
+
+      // Fetch evolution chain
+      try {
         const evolutionResponse = await axios.get<EvolutionChainResponse>(
-          speciesResponse.data.evolution_chain.url,
+          `${this.pokeApiBaseUrl}/evolution-chain/${pokemonDetails.id}`,
         );
 
         // Process evolution chain
         evolutionChain = this.processEvolutionChain(
           evolutionResponse.data.chain,
         );
+        this.logger.log(
+          `getPokemonDetails evolutionChain: ${Date.now()}`,
+          evolutionChain,
+        );
+      } catch (evolutionError) {
+        const errorMessage =
+          evolutionError instanceof Error
+            ? evolutionError.message
+            : 'Unknown error';
+        this.logger.error(`Failed to fetch evolution chain: ${errorMessage}`);
+        // Continue without evolutions if there's an error
       }
 
-      // Transform the data into our structure
-      const detailData = {
-        id: response.data.id,
-        name: response.data.name,
-        types: response.data.types.map((type) => type.type.name),
-        abilities: response.data.abilities.map(
-          (ability) => ability.ability.name,
-        ),
-        height: response.data.height,
-        weight: response.data.weight,
-        stats: {
-          hp:
-            response.data.stats.find((stat) => stat.stat.name === 'hp')
-              ?.base_stat || 0,
-          attack:
-            response.data.stats.find((stat) => stat.stat.name === 'attack')
-              ?.base_stat || 0,
-          defense:
-            response.data.stats.find((stat) => stat.stat.name === 'defense')
-              ?.base_stat || 0,
-          specialAttack:
-            response.data.stats.find(
-              (stat) => stat.stat.name === 'special-attack',
-            )?.base_stat || 0,
-          specialDefense:
-            response.data.stats.find(
-              (stat) => stat.stat.name === 'special-defense',
-            )?.base_stat || 0,
-          speed:
-            response.data.stats.find((stat) => stat.stat.name === 'speed')
-              ?.base_stat || 0,
-        },
-        sprites: {
-          front: response.data.sprites.front_default,
-          back: response.data.sprites.back_default,
-        },
-        evolutions: evolutionChain,
-        movments: response.data.moves,
-      };
+      // Add the evolution chain to the details
+      pokemonDetails.evolutions = evolutionChain;
 
-      // Save the details directly to the Pokemon document
-      pokemon.details = detailData;
-      pokemon.isViewed = true;
+      // Save the complete details to the Pokemon document using set and markModified
+      pokemon.set('details', pokemonDetails);
+      pokemon.set('isViewed', true);
+
+      // Explicitly mark the details field as modified
+      pokemon.markModified('details');
+
       await pokemon.save();
-      this.logger.log(`getPokemonDetails ${pokemon.details}`);
+
+      const detailss = pokemon.details as PokemonDetailsType | undefined;
+      this.logger.log(
+        `getPokemonDetails after save: ${Date.now()}`,
+        detailss?.evolutions,
+      );
+
       return { details: pokemon.details, _id: pokemon._id };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-
       this.logger.error(`Failed to fetch Pokemon details: ${errorMessage}`);
 
       if (error instanceof NotFoundException) {
@@ -313,6 +370,12 @@ export class PokemonService {
         },
       );
     }
+  }
+
+  // Helper method to extract ID from URL
+  private extractIdFromUrl(url: string): number {
+    const matches = url.match(/\/(\d+)\/?$/);
+    return matches ? parseInt(matches[1], 10) : 0;
   }
 
   private processEvolutionChain(chain: ChainLink): EvolutionData[] {

@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "./ui/badge";
-
+import { PokemonLoader } from "./PokemonLoader";
 interface PokemonDetailsProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +18,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   const isLoading = useAppSelector(
     (state) => state.pokemon.status === "loading"
   );
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // const favorites = useAppSelector((state) => state.favorites.list);
 
@@ -44,23 +45,23 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 
     const images = [];
 
-    if (details.sprites?.other?.["official-artwork"]?.front_default) {
-      images.push(details.sprites.other["official-artwork"].front_default);
+    if (details.sprites?.front_artwork) {
+      images.push(details.sprites.front_artwork);
     }
 
-    if (details.sprites.front_default) {
-      images.push(details.sprites.front_default);
+    if (details.sprites?.front) {
+      images.push(details.sprites.front);
     }
 
-    if (details.sprites.back_default) {
-      images.push(details.sprites.back_default);
+    if (details.sprites?.back) {
+      images.push(details.sprites.back);
     }
 
-    if (details.sprites.front_shiny) {
+    if (details.sprites?.front_shiny) {
       images.push(details.sprites.front_shiny);
     }
 
-    if (details.sprites.back_shiny) {
+    if (details.sprites?.back_shiny) {
       images.push(details.sprites.back_shiny);
     }
 
@@ -68,7 +69,6 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   };
 
   const images = getAvailableImages();
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const nextImage = () => {
     setActiveImageIndex((prev) => (prev + 1) % images.length);
@@ -108,16 +108,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
     typeColors[mainType] || "bg-gradient-to-r from-gray-400 to-gray-500";
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="relative w-20 h-20">
-          <div className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-t-red-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-          <div className="absolute top-2 left-2 w-16 h-16 rounded-full border-4 border-t-transparent border-r-yellow-500 border-b-transparent border-l-transparent animate-spin"></div>
-          <div className="absolute top-4 left-4 w-12 h-12 rounded-full border-4 border-t-transparent border-r-transparent border-b-blue-500 border-l-transparent animate-spin"></div>
-          <div className="absolute top-6 left-6 w-8 h-8 rounded-full border-4 border-t-transparent border-r-transparent border-b-transparent border-l-green-500 animate-spin"></div>
-        </div>
-      </div>
-    );
+    return <PokemonLoader />;
   }
 
   return (
@@ -356,48 +347,42 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               <TabsContent value="evolution">
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold mb-4">Evolution</h2>
-                  Evolution Chain
-                  <p className="text-gray-600 mb-4">
-                    Evolution information not available in this version.
-                  </p>
-                  <div className="flex justify-center">
-                    {/* <Image
-                      src="/placeholder.svg?height=200&width=200"
-                      alt="Evolution chain"
-                      width={200}
-                      height={200}
-                      className="opacity-50"
-                    /> */}
-                  </div>
-                </div>
-
-                {details.evolutions && details.evolutions.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="mb-2 font-semibold">Evolutions</h3>
-                    <div className="flex flex-wrap justify-center gap-4">
-                      {details.evolutions.map((evolution) => (
-                        <div
-                          key={evolution.id}
-                          className="flex flex-col items-center"
-                        >
-                          <img
-                            src={evolution.sprite}
-                            alt={evolution.name}
-                            className="h-24 w-24"
-                          />
-                          <p className="text-center capitalize">
-                            {evolution.name}
-                          </p>
-                          {evolution.condition && (
-                            <span className="text-xs text-gray-500">
-                              {evolution.condition}
-                            </span>
-                          )}
+                  {details.evolutions && details.evolutions.length === 0 ? (
+                    <p className="text-gray-600 mb-4">
+                      Evolution information not available in this version.
+                    </p>
+                  ) : (
+                    <>
+                      Evolution Chain
+                      {details.evolutions && details.evolutions.length > 0 && (
+                        <div className="mt-6">
+                          <div className="flex flex-wrap justify-center gap-4">
+                            {details.evolutions.map((evolution) => (
+                              <div
+                                key={evolution.id}
+                                className="flex flex-col items-center"
+                              >
+                                <img
+                                  src={evolution.sprite}
+                                  alt={evolution.name}
+                                  className="h-24 w-24"
+                                />
+                                <p className="text-center capitalize">
+                                  {evolution.name}
+                                </p>
+                                {evolution.condition && (
+                                  <span className="text-xs text-gray-500">
+                                    {evolution.condition}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      )}
+                    </>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           </div>

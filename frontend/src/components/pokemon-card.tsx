@@ -201,7 +201,7 @@ export function PokemonCard({
                   }`}
                 />
               </motion.button>
-              <div className="flex justify-center items-center p-4">
+              <div className="flex justify-center items-center p-4 h-[180px]">
                 <motion.div
                   animate={{
                     y: [0, -5, 0],
@@ -211,13 +211,12 @@ export function PokemonCard({
                     duration: 2,
                     ease: "easeInOut",
                   }}
+                  className="h-full flex items-center justify-center"
                 >
                   <img
                     src={getSpriteUrl(pokemon.details)}
                     alt={pokemon.name}
-                    width={150}
-                    height={150}
-                    className="object-contain drop-shadow-lg"
+                    className="object-contain drop-shadow-lg max-h-[150px] w-auto"
                   />
                 </motion.div>
               </div>
