@@ -1,16 +1,12 @@
 import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import {
-  fetchAllPokemon,
-  showFavorites,
-  fetchFavorites,
-} from "../store/pokemonSlice";
+import { showFavorites, fetchFavorites } from "../store/pokemonSlice";
 import SearchBar from "../components/SearchBar";
 import PokemonGrid from "../components/PokemonGrid";
 
 const FavoritesPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { status, favorites, list } = useAppSelector((state) => state.pokemon);
+  const { favorites, list } = useAppSelector((state) => state.pokemon);
   const favoriteCount = favorites.length;
 
   useEffect(() => {

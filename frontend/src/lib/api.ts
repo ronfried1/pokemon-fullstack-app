@@ -74,17 +74,6 @@ const PokemonDetailSchema = z
   .passthrough();
 
 const PokemonListSchema = z.array(PokemonSchema);
-// Update the schema to accept either string array or objects with name property
-const FavoritesListSchema = z.array(
-  z.union([
-    z.string(),
-    z.object({
-      _id: z.string(),
-      name: z.string(),
-      createdAt: z.string().optional(),
-    }),
-  ])
-);
 
 const api = axios.create({
   baseURL: API_URL,

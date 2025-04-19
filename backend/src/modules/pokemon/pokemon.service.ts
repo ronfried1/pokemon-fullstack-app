@@ -115,6 +115,15 @@ interface PokemonSpeciesResponse {
   evolution_chain: {
     url: string;
   };
+  flavor_text_entries: {
+    flavor_text: string;
+    language: {
+      name: string;
+    };
+    version: {
+      name: string;
+    };
+  }[];
 }
 
 interface EvolutionChainResponse {
@@ -341,6 +350,7 @@ export class PokemonService {
         height?: number;
         weight?: number;
         base_experience?: number;
+        description?: string;
       }
 
       // Type assertion for details
@@ -367,6 +377,22 @@ export class PokemonService {
           details?.species?.url || '',
         );
         const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
+
+        // Extract the English description from flavor text entries
+        const englishFlavorText = speciesResponse.data.flavor_text_entries.find(
+          (entry) => entry.language.name === 'en',
+        );
+
+        if (englishFlavorText) {
+          // Clean up the description text by removing special characters and extra spaces
+          const cleanDescription = englishFlavorText.flavor_text
+            .replace(/\f/g, ' ')
+            .replace(/\u00AD\n/g, '')
+            .replace(/\u00AD/g, '')
+            .replace(/\n/g, ' ');
+
+          pokemonDetails.description = cleanDescription;
+        }
 
         // Then fetch the evolution chain using the correct URL
         const evolutionResponse =
@@ -547,3 +573,4 @@ export class PokemonService {
     }
   }
 }
+

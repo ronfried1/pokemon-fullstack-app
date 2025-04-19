@@ -1,10 +1,10 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "./ui/button";
-import { useAppSelector } from "../store/hooks";
+// import { useAppSelector } from "../store/hooks";
 
 const NavBar: React.FC = () => {
-  const { favorites } = useAppSelector((state) => state.pokemon);
+  // const { favorites } = useAppSelector((state) => state.pokemon);
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
