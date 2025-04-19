@@ -1,5 +1,10 @@
 import React, { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  selectIsLoading,
+  selectError,
+} from "../store/hooks";
 import {
   fetchAllPokemon,
   resetFilters,
@@ -8,24 +13,48 @@ import {
 } from "../store/pokemonSlice";
 import SearchBar from "../components/search-bar";
 import PokemonGrid from "../components/pokemon-grid";
+import PokemonGridSkeleton from "../components/pokemon-grid-skeleton";
+import PageLayout from "../components/page-layout";
 import { Button } from "../components/ui/button";
+import { AlertCircle } from "lucide-react";
+import { useToast } from "../components/ui/use-toast";
 
+/**
+ * HomePage component - The main page of the application showing the Pokemon list
+ */
 const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { status, favorites } = useAppSelector((state) => state.pokemon);
+  const { favorites } = useAppSelector((state) => state.pokemon);
   const searchQuery = useAppSelector((state) => state.pokemon.searchQuery);
+  const isLoading = useAppSelector(selectIsLoading);
+  const error = useAppSelector(selectError);
   const favoriteCount = favorites.length;
-  console.log("favorites", favorites.length);
+  const { toast } = useToast();
 
+  // Load initial data
   useEffect(() => {
-    console.log("HomePage useEffect", status);
-    if (status === "idle") {
-      dispatch(resetFilters());
-      dispatch(fetchAllPokemon());
-      dispatch(fetchFavorites());
-    }
-    // Always reset filters when mounting HomePage
-  }, [dispatch, status]);
+    dispatch(resetFilters());
+
+    dispatch(fetchAllPokemon())
+      .unwrap()
+      .catch((error) => {
+        toast({
+          title: "Error loading Pokémon",
+          description: error || "Failed to load Pokémon data",
+          variant: "destructive",
+        });
+      });
+
+    dispatch(fetchFavorites())
+      .unwrap()
+      .catch(() => {
+        toast({
+          title: "Error loading favorites",
+          description: "Failed to load your favorite Pokémon",
+          variant: "destructive",
+        });
+      });
+  }, [dispatch, toast]);
 
   const handleShowAll = () => {
     dispatch(resetFilters());
@@ -34,43 +63,64 @@ const HomePage: React.FC = () => {
   const handleShowFavorites = () => {
     if (favoriteCount > 0) {
       dispatch(showFavorites());
+    } else {
+      toast({
+        title: "No favorites yet",
+        description: "Add some Pokémon to your favorites first",
+      });
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-4 text-2xl font-bold">Gotta Catch 'Em All</h1>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-grow">
-            <SearchBar />
-          </div>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShowAll}
-              disabled={!searchQuery && favoriteCount === 0}
-              className="h-10"
-            >
-              Show All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShowFavorites}
-              disabled={favoriteCount === 0}
-              className="h-10"
-            >
-              Show Favorites ({favoriteCount})
-            </Button>
-          </div>
+    <PageLayout title="Gotta Catch 'Em All">
+      <div className="flex flex-wrap items-center gap-4 mb-8">
+        <div className="flex-grow">
+          <SearchBar />
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShowAll}
+            disabled={!searchQuery && favoriteCount === 0}
+            className="h-10"
+          >
+            Show All
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShowFavorites}
+            disabled={favoriteCount === 0}
+            className="h-10"
+          >
+            Show Favorites ({favoriteCount})
+          </Button>
         </div>
       </div>
 
-      <PokemonGrid />
-    </div>
+      {error ? (
+        <div className="p-8 rounded-lg bg-destructive/10 text-destructive flex flex-col items-center justify-center space-y-4">
+          <AlertCircle className="h-10 w-10" />
+          <h3 className="text-xl font-bold">Error loading Pokémon</h3>
+          <p>{error}</p>
+          <Button
+            onClick={() => {
+              dispatch(resetFilters());
+              dispatch(fetchAllPokemon());
+            }}
+            variant="outline"
+          >
+            Try again
+          </Button>
+        </div>
+      ) : isLoading && favorites.length === 0 ? (
+        <PokemonGridSkeleton count={12} />
+      ) : (
+        <PokemonGrid />
+      )}
+    </PageLayout>
   );
 };
 
-export default HomePage;
+export default React.memo(HomePage);

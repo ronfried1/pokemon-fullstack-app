@@ -34,6 +34,7 @@ export interface Pokemon {
 
 export interface PokemonDetail {
   _id: string; // Document ID
+  isFav?: boolean; // Whether the Pokemon is favorited
   details: {
     id?: number;
     name: string;
@@ -64,6 +65,7 @@ export interface PokemonDetail {
     species: {
       url: string;
     };
+    description: string;
   };
 }
 

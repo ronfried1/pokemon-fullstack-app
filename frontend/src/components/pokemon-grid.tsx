@@ -1,120 +1,145 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useInView } from "react-intersection-observer";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { loadMorePokemon } from "../store/pokemonSlice";
-import { PokemonCard } from "./pokemon-card";
-import { motion } from "framer-motion";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { Dialog } from "./ui/dialog";
+import PokemonCard from "./pokemon-card";
 import PokemonDetails from "./pokemon-details";
-import { PokemonLoader } from "./pokemon-loader";
+import usePagination from "../features/pokemon/hooks/usePagination";
+import { Loader2 } from "lucide-react";
+import { selectFilteredPokemon, selectIsLoading } from "../store/hooks";
+import { PokemonCardSkeleton } from "./pokemon-card-skeleton";
+import { motion } from "framer-motion";
+import { fetchPokemonDetails } from "../store/pokemonSlice";
 
-const EmptyState = () => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.5 }}
-    className="flex flex-col items-center justify-center p-20 text-gray-600"
-  >
-    <h2 className="text-2xl font-bold mb-4">No Pokémon Found</h2>
-    <p>Try adjusting your search or filters.</p>
-  </motion.div>
-);
-
+/**
+ * PokemonGrid component - Displays a grid of Pokemon cards with infinite scroll
+ */
 const PokemonGrid: React.FC = () => {
-  const { filteredList, status, hasMore, limit, selectedPokemon } =
-    useAppSelector((state) => state.pokemon);
   const dispatch = useAppDispatch();
-  const { ref: observerRef, inView } = useInView();
+  const [selectedPokemonId, setSelectedPokemonId] = useState<string | null>(
+    null
+  );
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  const [fetchedIds, setFetchedIds] = useState<Set<string>>(new Set());
 
-  const isInitialLoading =
-    (status === "idle" || status === "loading") && filteredList.length === 0;
-  const isLoadingMore = status === "loading" && filteredList.length > 0;
+  // Use memoized selector for filtered Pokemon
+  const filteredPokemon = useAppSelector(selectFilteredPokemon);
+  const globalLoading = useAppSelector(selectIsLoading);
+  const selectedPokemon = useAppSelector(
+    (state) => state.pokemon.selectedPokemon
+  );
+  const detailStatus = useAppSelector((state) => state.pokemon.status);
 
-  // Track when details are loaded and open dialog
+  // Custom hook for pagination with infinite scroll
+  const { loadingRef, isFetchingMore, hasMore } = usePagination();
+
+  // Monitor the status of loading details
   useEffect(() => {
     if (
       isLoadingDetails &&
-      status === "succeeded" &&
-      selectedPokemon?._id === lastSelectedId
+      selectedPokemon?._id === selectedPokemonId &&
+      detailStatus === "succeeded"
     ) {
       setIsLoadingDetails(false);
-      setIsDetailsOpen(true);
     }
-  }, [status, selectedPokemon, isLoadingDetails, lastSelectedId]);
+  }, [selectedPokemon, selectedPokemonId, isLoadingDetails, detailStatus]);
 
-  // Open details dialog after Pokemon is loaded
+  /**
+   * Handle selecting a Pokemon to view details
+   */
   const handleSelectPokemon = useCallback(
     (id: string) => {
-      // If it's already the selected Pokemon, just open the dialog
-      if (selectedPokemon && selectedPokemon._id === id) {
-        setIsDetailsOpen(true);
-        return;
-      }
+      setSelectedPokemonId(id);
+      setIsDetailsOpen(true);
 
-      // Otherwise, mark as loading and wait for the API call to complete
-      setLastSelectedId(id);
-      setIsLoadingDetails(true);
+      // Only fetch details if we haven't already fetched this Pokemon before
+      // or we last fetched more than 5 minutes ago
+      if (!fetchedIds.has(id)) {
+        setIsLoadingDetails(true);
+        dispatch(fetchPokemonDetails(id));
+
+        // Add this ID to our cached set
+        setFetchedIds((prev) => new Set(prev).add(id));
+      }
     },
-    [selectedPokemon]
+    [dispatch, fetchedIds]
   );
 
-  const closeDetails = useCallback(() => {
+  /**
+   * Handle closing the details dialog
+   */
+  const handleCloseDetails = useCallback(() => {
     setIsDetailsOpen(false);
   }, []);
 
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (inView && hasMore && !isLoadingMore) {
-        dispatch(loadMorePokemon());
-      }
-    }, 200); // 200ms debounce
-
-    return () => clearTimeout(debounceTimer);
-  }, [inView, hasMore, dispatch, isLoadingMore]);
-
-  if (isInitialLoading) {
-    return <PokemonLoader />;
-  }
-
-  if (status === "failed") {
+  // If no pokemon are available, show empty state
+  if (filteredPokemon.length === 0 && !isFetchingMore && !globalLoading) {
     return (
-      <div className="flex justify-center p-10 text-red-500">
-        Error loading Pokémon. Please try again later.
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center p-8 text-center"
+      >
+        <img
+          src="/placeholder.svg"
+          alt="No Pokemon found"
+          className="h-40 w-40 opacity-50 mb-4"
+        />
+        <h3 className="text-xl font-bold mb-2">No Pokémon Found</h3>
+        <p className="text-muted-foreground">
+          Try adjusting your search criteria or check back later.
+        </p>
+      </motion.div>
     );
-  }
-
-  if (status === "succeeded" && filteredList.length === 0) {
-    return <EmptyState />;
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredList.map((pokemon, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8">
+        {filteredPokemon.map((pokemon, index) => (
           <PokemonCard
             key={pokemon._id}
             pokemon={pokemon}
-            index={index % limit}
+            index={index}
             onSelect={handleSelectPokemon}
           />
         ))}
+
+        {/* Add placeholder cards when loading more */}
+        {(isFetchingMore || (globalLoading && filteredPokemon.length === 0)) &&
+          Array(4)
+            .fill(null)
+            .map((_, index) => (
+              <PokemonCardSkeleton key={`loading-${index}`} index={index} />
+            ))}
       </div>
+
+      {/* Loading indicator for infinite scroll */}
       {hasMore && (
-        <div ref={observerRef}>
-          {isLoadingMore ? <PokemonLoader /> : <div className="h-8" />}
+        <div
+          ref={loadingRef}
+          className="flex justify-center items-center p-8 mt-8"
+        >
+          {isFetchingMore ? (
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Scroll to load more
+            </span>
+          )}
         </div>
       )}
-      <PokemonDetails
-        isOpen={isDetailsOpen}
-        onClose={closeDetails}
-        isLoading={isLoadingDetails}
-      />
+
+      {/* Pokemon details dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <PokemonDetails
+          isOpen={isDetailsOpen}
+          onClose={handleCloseDetails}
+          isLoading={isLoadingDetails}
+        />
+      </Dialog>
     </>
   );
 };
 
-export default PokemonGrid;
+export default React.memo(PokemonGrid);

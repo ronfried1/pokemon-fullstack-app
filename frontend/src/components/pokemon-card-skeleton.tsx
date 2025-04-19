@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 
-export function PokemonCardSkeleton({ index }: { index: number }) {
+/**
+ * Skeleton loading state for a Pokemon Card
+ */
+export function PokemonCardSkeleton({ index = 0 }: { index?: number }) {
   return (
     <motion.div
       className="h-full bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg animate-pulse flex flex-col justify-center items-center p-6"

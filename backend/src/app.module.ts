@@ -15,15 +15,12 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        // Option 1: Use MongoDB Atlas
         const mongoURI = configService.get<string>('MONGODB_URI');
 
-        // Option 2: Use local MongoDB
         const useLocalMongoDB =
           configService.get<string>('USE_LOCAL_MONGODB') === 'true';
         const localMongoURI = 'mongodb://localhost:27017/pokemon-app';
 
-        // Option 3: Use in-memory MongoDB (for development/testing)
         const useMemoryDB =
           configService.get<string>('USE_MEMORY_DB') === 'true';
         let memoryMongoURI = '';

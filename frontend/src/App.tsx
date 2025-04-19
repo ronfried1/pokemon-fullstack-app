@@ -5,6 +5,7 @@ import NavBar from "./components/navbar";
 import HomePage from "./pages/home-page";
 import FavoritesPage from "./pages/favorites-page";
 import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/toaster";
 
 function App() {
   return (
@@ -23,6 +24,9 @@ function App() {
               <p>Pokémon Manager - React TypeScript App</p>
             </div>
           </footer>
+
+          {/* Toast notifications */}
+          <Toaster />
         </div>
       </ThemeProvider>
     </Provider>
