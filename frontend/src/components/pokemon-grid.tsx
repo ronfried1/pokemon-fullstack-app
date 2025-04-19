@@ -24,7 +24,10 @@ const PokemonGrid: React.FC = () => {
   const { filteredList, status, hasMore, limit, selectedPokemon } =
     useAppSelector((state) => state.pokemon);
   const dispatch = useAppDispatch();
-  const { ref: observerRef, inView } = useInView();
+  const { ref: observerRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: "500px",
+  });
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
