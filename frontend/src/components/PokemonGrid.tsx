@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { PokemonCard } from "./pokemon-card";
-import { loadMorePokemon } from "../store/pokemonSlice";
-import { motion } from "framer-motion";
+import React, { useState, useCallback, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { loadMorePokemon } from "../store/pokemonSlice";
+import { PokemonCard } from "./pokemon-card";
+import { motion } from "framer-motion";
 import PokemonDetails from "./PokemonDetails";
 import { PokemonLoader } from "./PokemonLoader";
 
@@ -22,20 +22,49 @@ const EmptyState = () => (
 );
 
 const PokemonGrid: React.FC = () => {
-  const { filteredList, status, hasMore, limit } = useAppSelector(
-    (state) => state.pokemon
-  );
+  const { filteredList, status, hasMore, limit, selectedPokemon } =
+    useAppSelector((state) => state.pokemon);
   const dispatch = useAppDispatch();
   const { ref: observerRef, inView } = useInView();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
   const isInitialLoading =
     (status === "idle" || status === "loading") && filteredList.length === 0;
   const isLoadingMore = status === "loading" && filteredList.length > 0;
 
-  // // Open and close details
-  const openDetails = useCallback(() => setIsDetailsOpen(true), []);
-  const closeDetails = useCallback(() => setIsDetailsOpen(false), []);
+  // Track when details are loaded and open dialog
+  useEffect(() => {
+    if (
+      isLoadingDetails &&
+      status === "succeeded" &&
+      selectedPokemon?._id === lastSelectedId
+    ) {
+      setIsLoadingDetails(false);
+      setIsDetailsOpen(true);
+    }
+  }, [status, selectedPokemon, isLoadingDetails, lastSelectedId]);
+
+  // Open details dialog after Pokemon is loaded
+  const handleSelectPokemon = useCallback(
+    (id: string) => {
+      // If it's already the selected Pokemon, just open the dialog
+      if (selectedPokemon && selectedPokemon._id === id) {
+        setIsDetailsOpen(true);
+        return;
+      }
+
+      // Otherwise, mark as loading and wait for the API call to complete
+      setLastSelectedId(id);
+      setIsLoadingDetails(true);
+    },
+    [selectedPokemon]
+  );
+
+  const closeDetails = useCallback(() => {
+    setIsDetailsOpen(false);
+  }, []);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -71,7 +100,7 @@ const PokemonGrid: React.FC = () => {
             key={pokemon._id}
             pokemon={pokemon}
             index={index % limit}
-            onSelect={openDetails}
+            onSelect={handleSelectPokemon}
           />
         ))}
       </div>
@@ -80,7 +109,11 @@ const PokemonGrid: React.FC = () => {
           {isLoadingMore ? <PokemonLoader /> : <div className="h-8" />}
         </div>
       )}
-      <PokemonDetails isOpen={isDetailsOpen} onClose={closeDetails} />
+      <PokemonDetails
+        isOpen={isDetailsOpen}
+        onClose={closeDetails}
+        isLoading={isLoadingDetails}
+      />
     </>
   );
 };

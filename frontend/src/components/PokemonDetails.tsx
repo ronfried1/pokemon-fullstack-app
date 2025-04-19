@@ -1,21 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
-import { useAppSelector } from "../store/hooks";
-import { ArrowLeft, ArrowRight, Heart } from "lucide-react";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { ArrowLeft, ArrowRight, Heart, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
+import { toggleFavorite } from "../store/pokemonSlice";
 
 interface PokemonDetailsProps {
   isOpen: boolean;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
-const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
-  const details = useAppSelector(
-    (state) => state.pokemon.selectedPokemon?.details
-  ) as {
+const PokemonDetails: React.FC<PokemonDetailsProps> = ({
+  isOpen,
+  onClose,
+  isLoading = false,
+}) => {
+  const selectedPokemon = useAppSelector(
+    (state) => state.pokemon.selectedPokemon
+  );
+  const favorites = useAppSelector((state) => state.pokemon.favorites);
+
+  const details = selectedPokemon?.details as {
     id: number;
     name: string;
     types: { type: { name: string } }[];
@@ -32,24 +41,52 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
   };
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [optimisticIsFav, setOptimisticIsFav] = useState(false);
+  const dispatch = useAppDispatch();
 
-  // const favorites = useAppSelector((state) => state.favorites.list);
+  // Update favorite status when selectedPokemon or favorites changes
+  useEffect(() => {
+    if (selectedPokemon) {
+      setOptimisticIsFav(favorites.includes(selectedPokemon._id));
+    }
+  }, [selectedPokemon, favorites]);
 
-  if (!details) return null;
+  // If loading or no details, show loading state
+  if ((isLoading || !details) && isOpen) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden max-h-[90vh] md:max-h-[85vh]">
+          <div className="flex flex-col items-center justify-center h-[400px] space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <span className="text-lg">Loading Pokémon details...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-  // const { details } = pokemon;
-  // const isFavorite = favorites.includes(details.name);
+  // If dialog is closed or no details, return null
+  if (!isOpen || !details || !selectedPokemon) return null;
 
-  // const handleToggleFavorite = () => {
-  //   if (isFavorite) {
-  //     dispatch(removeFavorite(details.name));
-  //   } else {
-  //     dispatch(addFavorite(details.name));
-  //   }
-  // };
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const toggleFavorite = () => {
-    // setIsFavorite(!isFavorite)
+    // Immediately update the optimistic state
+    setOptimisticIsFav(!optimisticIsFav);
+
+    // Dispatch the actual action
+    dispatch(
+      toggleFavorite({
+        pokemonId: selectedPokemon._id,
+        isFavorite: !optimisticIsFav,
+      })
+    )
+      .unwrap()
+      .catch(() => {
+        // Revert optimistic update if the action fails
+        setOptimisticIsFav(optimisticIsFav);
+      });
   };
 
   // Get available images
@@ -134,14 +171,14 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                 className={`relative ${gradientClass} p-4 md:p-8 flex justify-center items-center min-h-[250px] md:min-h-[350px]`}
               >
                 <motion.button
-                  onClick={toggleFavorite}
+                  onClick={handleToggleFavorite}
                   className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background shadow-md"
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.8 }}
                 >
                   <Heart
                     className={`h-5 w-5 ${
-                      false
+                      optimisticIsFav
                         ? "fill-destructive text-destructive"
                         : "text-muted-foreground"
                     }`}
@@ -363,7 +400,9 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                       ))}
                     </div>
                     <p className="text-sm text-muted-foreground mt-4 text-center">
-                      Showing 20 of 86 moves
+                      {`Showing ${
+                        details.moves.length < 20 ? details.moves.length : 20
+                      } of ${details.moves.length} moves`}
                     </p>
                   </div>
                 </TabsContent>
@@ -397,11 +436,13 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                                     <p className="text-center capitalize text-xs md:text-base text-foreground">
                                       {evolution.name}
                                     </p>
-                                    {evolution.condition && (
+                                    {
                                       <span className="text-[10px] md:text-xs text-muted-foreground">
-                                        {evolution.condition}
+                                        {evolution.condition
+                                          ? evolution.condition
+                                          : "level 1"}
                                       </span>
-                                    )}
+                                    }
                                   </div>
                                 ))}
                               </div>

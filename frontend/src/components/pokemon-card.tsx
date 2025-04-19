@@ -43,7 +43,7 @@ export function PokemonCard({
 }: {
   pokemon: Pokemon;
   index: number;
-  onSelect: () => void;
+  onSelect: (id: string) => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -136,7 +136,7 @@ export function PokemonCard({
   const handleClick = () => {
     // Fetch pokemon details when card is clicked
     dispatch(fetchPokemonDetails(pokemon._id || ""));
-    onSelect();
+    onSelect(pokemon._id || "");
   };
 
   return (
