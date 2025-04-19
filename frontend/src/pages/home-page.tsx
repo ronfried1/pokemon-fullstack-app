@@ -6,8 +6,8 @@ import {
   showFavorites,
   fetchFavorites,
 } from "../store/pokemonSlice";
-import SearchBar from "../components/SearchBar";
-import PokemonGrid from "../components/PokemonGrid";
+import SearchBar from "../components/search-bar";
+import PokemonGrid from "../components/pokemon-grid";
 import { Button } from "../components/ui/button";
 
 const HomePage: React.FC = () => {

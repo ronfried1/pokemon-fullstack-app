@@ -4,8 +4,8 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { loadMorePokemon } from "../store/pokemonSlice";
 import { PokemonCard } from "./pokemon-card";
 import { motion } from "framer-motion";
-import PokemonDetails from "./PokemonDetails";
-import { PokemonLoader } from "./PokemonLoader";
+import PokemonDetails from "./pokemon-details";
+import { PokemonLoader } from "./pokemon-loader";
 
 // Empty state
 const EmptyState = () => (

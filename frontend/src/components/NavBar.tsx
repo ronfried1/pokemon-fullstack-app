@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ModeToggle } from "./ModeToggle";
+import { ModeToggle } from "./mode-toggle";
 // import { useAppSelector } from "../store/hooks";
 
 const NavBar: React.FC = () => {

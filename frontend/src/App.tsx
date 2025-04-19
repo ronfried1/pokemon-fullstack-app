@@ -1,10 +1,10 @@
 import { Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
-import NavBar from "./components/NavBar";
-import HomePage from "./pages/HomePage";
-import FavoritesPage from "./pages/FavoritesPage";
-import { ThemeProvider } from "./components/ThemeProvider";
+import NavBar from "./components/navbar";
+import HomePage from "./pages/home-page";
+import FavoritesPage from "./pages/favorites-page";
+import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
   return (
