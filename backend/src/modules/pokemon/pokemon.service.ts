@@ -111,6 +111,12 @@ interface PokemonApiResponse {
   moves: any[];
 }
 
+interface PokemonSpeciesResponse {
+  evolution_chain: {
+    url: string;
+  };
+}
+
 interface EvolutionChainResponse {
   chain: ChainLink;
 }
@@ -266,6 +272,10 @@ export class PokemonService {
         base_experience: basicDetails.base_experience,
         abilities: basicDetails.abilities,
         moves: basicDetails.moves,
+        // Add species URL for evolution chain
+        species: {
+          url: `${this.pokeApiBaseUrl}/pokemon-species/${basicDetails.id}`,
+        },
 
         // Include full sprites object with all variations
         sprites: {
@@ -290,8 +300,6 @@ export class PokemonService {
         },
         // Add base stats that might be displayed in the card
         stats: basicDetails.stats,
-
-        // Don't include evolutions or full move data to keep it lightweight
       };
 
       // Update the Pokemon document with the simplified details
@@ -337,12 +345,6 @@ export class PokemonService {
 
       // Type assertion for details
       const details = pokemon.details as PokemonDetailsType | undefined;
-      this.logger.log(
-        `getPokemonDetails execution time: ${Date.now()}`,
-        pokemon._id,
-        details?.id,
-        details?.evolutions,
-      );
 
       // If we have full details with evolutions, just return them
       if (
@@ -351,26 +353,30 @@ export class PokemonService {
         details.evolutions &&
         details.evolutions.length > 0
       ) {
-        this.logger.log(
-          `getPokemonDetails returning existing details: ${Date.now()}`,
-        );
         return { details: pokemon.details, _id: pokemon._id };
       }
 
-      // We already have basic details, so we just need to add evolutions and moves
+      // We already have basic details, so we just need to add evolutions
       const pokemonDetails: PokemonDetailsType = details || {};
       let evolutionChain: EvolutionData[] = [];
 
       // Fetch evolution chain
       try {
-        const evolutionResponse = await axios.get<EvolutionChainResponse>(
-          `${this.pokeApiBaseUrl}/evolution-chain/${pokemonDetails.id}`,
+        // First, get the species data which contains the evolution chain URL
+        const speciesResponse = await axios.get<PokemonSpeciesResponse>(
+          details?.species?.url || '',
         );
+        const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
+
+        // Then fetch the evolution chain using the correct URL
+        const evolutionResponse =
+          await axios.get<EvolutionChainResponse>(evolutionChainUrl);
 
         // Process evolution chain
         evolutionChain = this.processEvolutionChain(
           evolutionResponse.data.chain,
         );
+
         this.logger.log(
           `getPokemonDetails evolutionChain: ${Date.now()}`,
           evolutionChain,
@@ -387,20 +393,12 @@ export class PokemonService {
       // Add the evolution chain to the details
       pokemonDetails.evolutions = evolutionChain;
 
-      // Save the complete details to the Pokemon document using set and markModified
+      // Save the complete details to the Pokemon document
       pokemon.set('details', pokemonDetails);
       pokemon.set('isViewed', true);
-
-      // Explicitly mark the details field as modified
       pokemon.markModified('details');
 
       await pokemon.save();
-
-      const detailss = pokemon.details as PokemonDetailsType | undefined;
-      this.logger.log(
-        `getPokemonDetails after save: ${Date.now()}`,
-        detailss?.evolutions,
-      );
 
       return { details: pokemon.details, _id: pokemon._id };
     } catch (error) {

@@ -207,9 +207,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                   <Badge
                     key={type.type.name}
                     className={`${
-                      type.type.name === "grass"
-                        ? "bg-green-500"
-                        : "bg-purple-500"
+                      typeColors[type.type.name]
                     } text-white px-3 py-1`}
                   >
                     {type.type.name}
