@@ -1,17 +1,14 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Heart } from "lucide-react";
-
-// import type { Pokemon } from "@/lib/types"
 import { motion } from "framer-motion";
 import { Pokemon } from "../types/pokemon";
 import { useAppDispatch } from "../store/hooks";
-import { fetchPokemonDetails } from "../store/pokemonSlice";
+import { fetchPokemonDetails, toggleFavorite } from "../store/pokemonSlice";
 
 const typeColors: Record<string, string> = {
   normal: "bg-gradient-to-r from-gray-400 to-gray-500",
@@ -48,29 +45,33 @@ export function PokemonCard({
   index: number;
   onSelect: () => void;
 }) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [optimisticIsFav, setOptimisticIsFav] = useState(pokemon.isFav);
   const dispatch = useAppDispatch();
 
-  const toggleFavorite = (e: React.MouseEvent) => {
+  // Update optimistic state when actual favorite status changes
+  useEffect(() => {
+    setOptimisticIsFav(pokemon.isFav);
+  }, [pokemon.isFav]);
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const storedFavorites = localStorage.getItem("favorites");
-    let favorites: string[] = storedFavorites
-      ? JSON.parse(storedFavorites)
-      : [];
+    // Immediately update the optimistic state
+    setOptimisticIsFav(!optimisticIsFav);
 
-    // if (isFavorite) {
-    //   favorites = favorites.filter((id) => id !== pokemon._id);
-    // } else {
-    //   favorites.push(pokemon._id);
-    // }
-
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-    setIsFavorite(!isFavorite);
+    // Dispatch the actual action
+    dispatch(
+      toggleFavorite({ pokemonId: pokemon._id, isFavorite: !pokemon.isFav })
+    )
+      .unwrap()
+      .catch(() => {
+        // Revert optimistic update if the action fails
+        setOptimisticIsFav(pokemon.isFav);
+      });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -164,24 +165,6 @@ export function PokemonCard({
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
           className="h-full"
         >
-          {/* <motion.div
-      ref={cardRef}
-      className="h-full perspective-1000 max-w-sm rounded relative w-full"
-      variants={variants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      whileHover={{ scale: 1.05, zIndex: 10 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ delay: index * 0.08, ease: "easeInOut", duration: 0.5 }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={resetRotation}
-      style={{
-        rotateX: isHovered ? rotation.x : 0,
-        rotateY: isHovered ? rotation.y : 0,
-      }}
-    > */}
           <Card
             onClick={handleClick}
             className="overflow-hidden h-full border-0 rounded-2xl shadow-lg bg-card dark:bg-card/50 backdrop-blur-sm transition-all duration-300"
@@ -190,14 +173,16 @@ export function PokemonCard({
               className={`relative pt-6 px-6 ${gradientClass} rounded-t-2xl`}
             >
               <motion.button
-                onClick={toggleFavorite}
+                onClick={handleToggleFavorite}
                 className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.8 }}
               >
                 <Heart
-                  className={`h-5 w-5 ${
-                    isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+                  className={`h-5 w-5 transition-colors duration-200 ${
+                    optimisticIsFav
+                      ? "fill-red-500 text-red-500"
+                      : "text-gray-400"
                   }`}
                 />
               </motion.button>

@@ -191,36 +191,43 @@ export const pokemonApi = {
     }
   },
 
-  // Fetch favorite Pokemon
-  getFavorites: async (): Promise<string[]> => {
+  // Fetch favorite Pokemon - now uses the Pokemon collection with isFav=true
+  getFavorites: async (): Promise<Pokemon[]> => {
     try {
-      const response = await api.get("/favorites");
-      // Parse the data with our updated schema
-      const favorites = FavoritesListSchema.parse(response.data);
-      // Extract just the names if they're objects
-      return favorites.map((fav) => (typeof fav === "string" ? fav : fav.name));
+      const response = await api.get(`/pokemon?favorites=true`);
+      console.log(`API Response: Got ${response.data.length} Favorite Pokemon`);
+
+      // Map any missing fields with defaults before validation
+      const processedData = response.data.map((pokemon: any) => ({
+        _id: pokemon._id,
+        name: pokemon.name,
+        url: pokemon.url,
+        isFav: true, // These are all favorites
+        isViewed: pokemon.isViewed !== undefined ? pokemon.isViewed : false,
+        details: pokemon.details || {},
+      }));
+
+      try {
+        return PokemonListSchema.parse(processedData) as unknown as Pokemon[];
+      } catch (zodError) {
+        console.error("Zod validation error:", zodError);
+        throw zodError;
+      }
     } catch (error) {
       console.error("Error fetching favorites:", error);
       throw error;
     }
   },
 
-  // Add a Pokemon to favorites
-  addFavorite: async (name: string): Promise<void> => {
+  // Toggle favorite status for a Pokemon
+  toggleFavorite: async (
+    pokemonId: string,
+    isFavorite: boolean
+  ): Promise<void> => {
     try {
-      await api.post("/favorites", { name });
+      await api.patch(`/pokemon/${pokemonId}/favorite`, { isFavorite });
     } catch (error) {
-      console.error("Error adding favorite:", error);
-      throw error;
-    }
-  },
-
-  // Remove a Pokemon from favorites
-  removeFavorite: async (name: string): Promise<void> => {
-    try {
-      await api.delete("/favorites", { data: { name } });
-    } catch (error) {
-      console.error("Error removing favorite:", error);
+      console.error("Error toggling favorite status:", error);
       throw error;
     }
   },

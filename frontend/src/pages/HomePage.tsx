@@ -1,23 +1,30 @@
 import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchAllPokemon, resetFilters } from "../store/pokemonSlice";
-import { fetchFavorites } from "../store/favoritesSlice";
+import {
+  fetchAllPokemon,
+  resetFilters,
+  showFavorites,
+  fetchFavorites,
+} from "../store/pokemonSlice";
 import SearchBar from "../components/SearchBar";
 import PokemonGrid from "../components/PokemonGrid";
 import { Button } from "../components/ui/button";
 
 const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { status } = useAppSelector((state) => state.pokemon);
-  const favorites = useAppSelector((state) => state.favorites.list);
+  const { status, favorites } = useAppSelector((state) => state.pokemon);
   const searchQuery = useAppSelector((state) => state.pokemon.searchQuery);
+  const favoriteCount = favorites.length;
+  console.log("favorites", favorites.length);
 
   useEffect(() => {
-    console.log("HomePage useEffect");
+    console.log("HomePage useEffect", status);
     if (status === "idle") {
+      dispatch(resetFilters());
       dispatch(fetchAllPokemon());
       dispatch(fetchFavorites());
     }
+    // Always reset filters when mounting HomePage
   }, [dispatch, status]);
 
   const handleShowAll = () => {
@@ -25,15 +32,8 @@ const HomePage: React.FC = () => {
   };
 
   const handleShowFavorites = () => {
-    if (favorites.length > 0) {
-      dispatch(resetFilters());
-
-      // Wait for resetFilters to be applied
-      setTimeout(() => {
-        import("../store/pokemonSlice").then((module) => {
-          dispatch(module.filterByFavorites(favorites));
-        });
-      }, 0);
+    if (favoriteCount > 0) {
+      dispatch(showFavorites());
     }
   };
 
@@ -50,7 +50,7 @@ const HomePage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleShowAll}
-              disabled={!searchQuery && favorites.length === 0}
+              disabled={!searchQuery && favoriteCount === 0}
               className="h-10"
             >
               Show All
@@ -59,10 +59,10 @@ const HomePage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleShowFavorites}
-              disabled={favorites.length === 0}
+              disabled={favoriteCount === 0}
               className="h-10"
             >
-              Show Favorites ({favorites.length})
+              Show Favorites ({favoriteCount})
             </Button>
           </div>
         </div>

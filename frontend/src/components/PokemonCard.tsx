@@ -9,9 +9,8 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Pokemon } from "../types/pokemon";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchPokemonDetails } from "../store/pokemonSlice";
-import { addFavorite, removeFavorite } from "../store/favoritesSlice";
+import { useAppDispatch } from "../store/hooks";
+import { fetchPokemonDetails, toggleFavorite } from "../store/pokemonSlice";
 
 interface PokemonCardProps {
   pokemon: Pokemon;
@@ -20,16 +19,13 @@ interface PokemonCardProps {
 
 const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onSelect }) => {
   const dispatch = useAppDispatch();
-  const favorites = useAppSelector((state) => state.favorites.list);
-  const isFavorite = favorites.includes(pokemon.name);
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isFavorite) {
-      dispatch(removeFavorite(pokemon.name));
-    } else {
-      dispatch(addFavorite(pokemon.name));
-    }
+    console.log("handleToggleFavorite: ", pokemon._id, !pokemon.isFav);
+    dispatch(
+      toggleFavorite({ pokemonId: pokemon._id, isFavorite: !pokemon.isFav })
+    );
   };
 
   const handleClick = () => {
@@ -96,10 +92,10 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onSelect }) => {
         </Button>
         <Button
           onClick={handleToggleFavorite}
-          variant={isFavorite ? "destructive" : "outline"}
+          variant={pokemon.isFav ? "destructive" : "outline"}
           size="sm"
         >
-          {isFavorite ? "Remove" : "Favorite"}
+          {pokemon.isFav ? "Remove" : "Favorite"}
         </Button>
       </CardFooter>
     </Card>

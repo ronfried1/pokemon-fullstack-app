@@ -14,9 +14,40 @@ const initialState: PokemonState = {
   hasMore: true,
   limit: 12,
   totalCount: 0,
+  favorites: [],
 };
 
 // Async thunks
+export const fetchFavorites = createAsyncThunk<string[]>(
+  "pokemon/fetchFavorites",
+  async (_, { rejectWithValue }) => {
+    try {
+      const favorites = await pokemonApi.getFavorites();
+      return favorites.map((pokemon) => pokemon._id);
+    } catch (error) {
+      return rejectWithValue("Failed to fetch favorites");
+    }
+  }
+);
+
+export const toggleFavorite = createAsyncThunk(
+  "pokemon/toggleFavorite",
+  async (
+    { pokemonId, isFavorite }: { pokemonId: string; isFavorite: boolean },
+    { rejectWithValue }
+  ) => {
+    try {
+      console.log("toggleFavorite: ", pokemonId, isFavorite);
+      await pokemonApi.toggleFavorite(pokemonId, isFavorite);
+      return { pokemonId, isFavorite };
+    } catch (error) {
+      return rejectWithValue(
+        `Failed to ${isFavorite ? "add" : "remove"} Pokemon from favorites`
+      );
+    }
+  }
+);
+
 export const fetchAllPokemon = createAsyncThunk(
   "pokemon/fetchAll",
   async (_, { getState, rejectWithValue }) => {
@@ -115,43 +146,32 @@ const pokemonSlice = createSlice({
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
-      state.page = 1; // Reset pagination when search changes
+      state.page = 1;
 
       if (action.payload === "") {
-        // If search is cleared, just show the initial list
         state.filteredList = state.list.slice(0, state.limit);
         state.hasMore = state.list.length > state.limit;
       }
-      // The actual search will be handled by the searchPokemon thunk
     },
-    filterByFavorites: (state, action: PayloadAction<string[]>) => {
-      state.page = 1; // Reset pagination when filters change
-
-      if (action.payload.length === 0) {
-        state.filteredList = state.list.slice(0, state.limit);
-        state.hasMore = state.list.length > state.limit;
-      } else {
-        const allFiltered = state.list.filter((pokemon) =>
-          action.payload.includes(pokemon.name)
-        );
-
-        state.filteredList = allFiltered.slice(0, state.limit);
-        state.hasMore = allFiltered.length > state.limit;
-      }
+    showFavorites: (state) => {
+      state.page = 1;
+      const favorites = state.list.filter((pokemon) =>
+        state.favorites.includes(pokemon._id)
+      );
+      state.filteredList = favorites.slice(0, state.limit);
+      state.hasMore = favorites.length > state.limit;
     },
     resetFilters: (state) => {
-      // Completely reset the state
       state.page = 1;
       state.searchQuery = "";
       state.status = "idle";
 
-      // Start fresh with the initial data
       if (state.list.length > 0) {
         state.filteredList = state.list.slice(0, state.limit);
         state.hasMore = state.list.length > state.limit;
       } else {
         state.filteredList = [];
-        state.hasMore = true; // Set to true so we try to fetch data
+        state.hasMore = true;
       }
     },
   },
@@ -294,159 +314,43 @@ const pokemonSlice = createSlice({
       .addCase(searchPokemon.rejected, (state, action) => {
         state.status = "failed";
         state.error = (action.payload as string) || "Unknown error occurred";
+      })
+      .addCase(
+        fetchFavorites.fulfilled,
+        (state, action: PayloadAction<string[]>) => {
+          state.favorites = action.payload;
+          // Update isFav property for all Pokemon in both lists
+          const updatePokemonFavorites = (list: Pokemon[]) => {
+            list.forEach((pokemon) => {
+              pokemon.isFav = state.favorites.includes(pokemon._id);
+            });
+          };
+          updatePokemonFavorites(state.list);
+          updatePokemonFavorites(state.filteredList);
+        }
+      )
+      .addCase(toggleFavorite.fulfilled, (state, action) => {
+        const { pokemonId, isFavorite } = action.payload;
+        if (isFavorite) {
+          state.favorites.push(pokemonId);
+        } else {
+          state.favorites = state.favorites.filter((id) => id !== pokemonId);
+        }
+
+        // Update both list and filteredList
+        const updatePokemon = (list: Pokemon[]) => {
+          const pokemon = list.find((p) => p._id === pokemonId);
+          if (pokemon) {
+            pokemon.isFav = isFavorite;
+          }
+        };
+
+        updatePokemon(state.list);
+        updatePokemon(state.filteredList);
       });
   },
 });
 
-export const {
-  selectPokemon,
-  setSearchQuery,
-  filterByFavorites,
-  resetFilters,
-} = pokemonSlice.actions;
+export const { selectPokemon, setSearchQuery, showFavorites, resetFilters } =
+  pokemonSlice.actions;
 export default pokemonSlice.reducer;
-
-// import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-// import { Pokemon, PokemonDetail, PokemonState } from "../types/pokemon";
-// import { pokemonApi } from "../lib/api";
-
-// const initialState: PokemonState = {
-//   list: [],
-//   filteredList: [],
-//   selectedPokemon: null,
-//   status: "idle",
-//   error: null,
-//   searchQuery: "",
-//   page: 1,
-//   limit: 15,
-//   hasMore: true,
-// };
-
-// export const fetchAllPokemon = createAsyncThunk(
-//   "pokemon/fetchAll",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       return await pokemonApi.getAll(0, 150); // Fetch 150 once, cache in frontend
-//     } catch (error) {
-//       return rejectWithValue("Failed to fetch Pokémon");
-//     }
-//   }
-// );
-
-// export const loadMorePokemon = createAsyncThunk(
-//   "pokemon/loadMore",
-//   async (_, { getState, rejectWithValue }) => {
-//     try {
-//       const state = getState() as { pokemon: PokemonState };
-//       const { page, limit, list, searchQuery } = state.pokemon;
-
-//       const filteredList = searchQuery
-//         ? list.filter((pokemon) =>
-//             pokemon.name.toLowerCase().includes(searchQuery.toLowerCase())
-//           )
-//         : list;
-
-//       const offset = page * limit;
-//       const nextPokemons = filteredList.slice(offset, offset + limit);
-
-//       return nextPokemons;
-//     } catch (error) {
-//       return rejectWithValue("Failed to load more Pokémon");
-//     }
-//   }
-// );
-
-// export const fetchPokemonDetails = createAsyncThunk(
-//   "pokemon/fetchDetails",
-//   async (pokemonId: string, { rejectWithValue }) => {
-//     try {
-//       return await pokemonApi.getPokemonDetails(pokemonId);
-//     } catch (error) {
-//       return rejectWithValue("Failed to fetch Pokémon details");
-//     }
-//   }
-// );
-
-// const pokemonSlice = createSlice({
-//   name: "pokemon",
-//   initialState,
-//   reducers: {
-//     selectPokemon: (state, action: PayloadAction<PokemonDetail | null>) => {
-//       state.selectedPokemon = action.payload;
-//     },
-//     setSearchQuery: (state, action: PayloadAction<string>) => {
-//       state.searchQuery = action.payload;
-//       state.page = 1;
-
-//       const query = action.payload.toLowerCase();
-//       const filtered = state.list.filter((pokemon) =>
-//         pokemon.name.toLowerCase().includes(query)
-//       );
-
-//       state.filteredList = filtered.slice(0, state.limit);
-//       state.hasMore = filtered.length > state.limit;
-//     },
-//     resetFilters: (state) => {
-//       state.searchQuery = "";
-//       state.page = 1;
-//       state.filteredList = state.list.slice(0, state.limit);
-//       state.hasMore = state.list.length > state.limit;
-//     },
-//   },
-//   extraReducers: (builder) => {
-//     builder
-//       .addCase(fetchAllPokemon.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(
-//         fetchAllPokemon.fulfilled,
-//         (state, action: PayloadAction<Pokemon[]>) => {
-//           state.status = "succeeded";
-//           state.list = action.payload;
-//           state.filteredList = action.payload.slice(0, state.limit);
-//           state.hasMore = action.payload.length > state.limit;
-//         }
-//       )
-//       .addCase(fetchAllPokemon.rejected, (state, action) => {
-//         state.status = "failed";
-//         state.error = (action.payload as string) || "Unknown error";
-//       })
-//       .addCase(loadMorePokemon.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(
-//         loadMorePokemon.fulfilled,
-//         (state, action: PayloadAction<Pokemon[]>) => {
-//           state.status = "succeeded";
-//           state.page += 1;
-
-//           if (state.searchQuery) {
-//             state.filteredList = [...state.filteredList, ...action.payload];
-//             state.hasMore = action.payload.length >= state.limit;
-//           } else {
-//             state.filteredList = [...state.filteredList, ...action.payload];
-//             state.hasMore = action.payload.length >= state.limit;
-//           }
-//         }
-//       )
-//       .addCase(loadMorePokemon.rejected, (state, action) => {
-//         state.status = "failed";
-//         state.error = (action.payload as string) || "Unknown error";
-//       })
-//       .addCase(
-//         fetchPokemonDetails.fulfilled,
-//         (state, action: PayloadAction<PokemonDetail>) => {
-//           if (
-//             state.selectedPokemon &&
-//             state.selectedPokemon.pokeId === action.payload.pokeId
-//           ) {
-//             state.selectedPokemon = action.payload;
-//           }
-//         }
-//       );
-//   },
-// });
-
-// export const { selectPokemon, setSearchQuery, resetFilters } =
-//   pokemonSlice.actions;
-// export default pokemonSlice.reducer;

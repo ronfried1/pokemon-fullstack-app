@@ -4,8 +4,7 @@ import { Button } from "./ui/button";
 import { useAppSelector } from "../store/hooks";
 
 const NavBar: React.FC = () => {
-  const favorites = useAppSelector((state) => state.favorites.list);
-
+  const { favorites } = useAppSelector((state) => state.pokemon);
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -23,7 +22,7 @@ const NavBar: React.FC = () => {
             >
               All Pokémon
             </NavLink>
-            <NavLink
+            {/* <NavLink
               to="/favorites"
               className={({ isActive }) =>
                 `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
@@ -37,7 +36,7 @@ const NavBar: React.FC = () => {
                   {favorites.length}
                 </span>
               )}
-            </NavLink>
+            </NavLink> */}
           </nav>
         </div>
 
@@ -80,3 +79,31 @@ const NavBar: React.FC = () => {
 };
 
 export default NavBar;
+
+// import React from "react";
+// import { Link } from "react-router-dom";
+// import { useAppSelector } from "../store/hooks";
+
+// const Navbar: React.FC = () => {
+//   const { favorites } = useAppSelector((state) => state.pokemon);
+
+//   return (
+//     <nav className="border-b">
+//       <div className="container mx-auto flex h-16 items-center px-4">
+//         <Link to="/" className="text-xl font-bold">
+//           Pokédex
+//         </Link>
+//         <div className="ml-auto space-x-4">
+//           <Link to="/" className="hover:text-primary">
+//             Home
+//           </Link>
+//           <Link to="/favorites" className="hover:text-primary">
+//             Favorites ({favorites.length})
+//           </Link>
+//         </div>
+//       </div>
+//     </nav>
+//   );
+// };
+
+// export default Navbar;

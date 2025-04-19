@@ -4,8 +4,8 @@ export interface Pokemon {
   _id: string; // ObjectId
   name: string;
   url: string;
-  isFav: boolean;
-  isViewed: boolean;
+  isFav?: boolean;
+  isViewed?: boolean;
   details?: {
     id?: number;
     name?: string;
@@ -84,13 +84,14 @@ export interface PokemonState {
   error: string | null;
   searchQuery: string;
   page: number;
-  limit: number;
   hasMore: boolean;
+  limit: number;
   totalCount: number;
+  favorites: string[]; // Array of Pokemon IDs that are favorites
 }
 
 export interface FavoritesState {
-  list: string[];
+  list: Pokemon[];
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }

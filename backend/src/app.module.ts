@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PokemonModule } from './modules/pokemon/pokemon.module';
-import { FavoritesModule } from './modules/favorites/favorites.module';
 import { HealthModule } from './modules/health/health.module';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
@@ -58,7 +57,6 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
       },
     }),
     PokemonModule,
-    FavoritesModule,
     HealthModule,
   ],
 })

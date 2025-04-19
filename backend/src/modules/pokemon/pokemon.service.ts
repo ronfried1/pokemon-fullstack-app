@@ -485,4 +485,67 @@ export class PokemonService {
 
     return 'Unknown';
   }
+
+  async getFavorites(): Promise<PokemonResult[]> {
+    try {
+      const mongoData = await this.pokemonModel.find({ isFav: true }).exec();
+
+      const enrichedPokemon = await Promise.all(
+        mongoData.map(async (pokemon) => {
+          if (!pokemon.details) {
+            const detailedData = await this.fetchAndSavePokemonDetails(pokemon);
+            pokemon.details = detailedData?.details;
+          }
+          return {
+            _id: pokemon._id,
+            name: pokemon.name,
+            url: pokemon.url,
+            isFav: pokemon.isFav,
+            isViewed: pokemon.isViewed,
+            details: pokemon.details,
+          };
+        }),
+      );
+
+      return enrichedPokemon;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error(`Failed to fetch favorites: ${errorMessage}`);
+      throw new InternalServerErrorException('Failed to fetch favorites', {
+        cause: new Error(),
+        description: 'Internal Server Error',
+      });
+    }
+  }
+
+  async toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
+    try {
+      const pokemon = await this.pokemonModel
+        .findById(new Types.ObjectId(id))
+        .exec();
+      if (!pokemon) {
+        throw new NotFoundException(`Pokemon with ID ${id} not found`);
+      }
+
+      pokemon.isFav = isFavorite;
+      await pokemon.save();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error(`Failed to toggle favorite status: ${errorMessage}`);
+
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to toggle favorite status',
+        {
+          cause: new Error(),
+          description: 'Internal Server Error',
+        },
+      );
+    }
+  }
 }
