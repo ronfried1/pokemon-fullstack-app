@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import PokemonDetails from "./pokemon-details";
 import { PokemonLoader } from "./pokemon-loader";
 
-// Empty state
 const EmptyState = () => (
   <motion.div
     initial={{ opacity: 0 }}

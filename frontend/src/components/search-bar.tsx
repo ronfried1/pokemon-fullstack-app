@@ -39,7 +39,6 @@ const SearchBar: React.FC = () => {
 
   const handleClear = () => {
     setInputValue("");
-    // Reset filters and fetch fresh data from the beginning
     dispatch(resetFilters());
     dispatch(fetchAllPokemon());
   };

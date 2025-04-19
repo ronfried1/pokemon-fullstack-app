@@ -8,7 +8,6 @@ export function ModeToggle() {
   const [isDark, setIsDark] = useState<boolean>(false);
 
   useEffect(() => {
-    // Set the initial state based on the current theme
     setIsDark(
       theme === "dark" ||
         (theme === "system" &&
