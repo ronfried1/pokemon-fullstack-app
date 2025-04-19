@@ -6,16 +6,18 @@ import { Button } from "./ui/button";
 const NavBar: React.FC = () => {
   // const { favorites } = useAppSelector((state) => state.pokemon);
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-white">
+    <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center">
-          <h1 className="mr-6 text-xl font-bold">Pokémon Manager</h1>
+          <h1 className="mr-6 text-xl font-bold text-foreground">
+            Pokémon Manager
+          </h1>
           <nav className="flex space-x-4">
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isActive ? "bg-gray-100 dark:bg-gray-700 dark:text-white" : ""
+                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive ? "bg-muted text-foreground" : "text-foreground/80"
                 }`
               }
               end
@@ -25,14 +27,14 @@ const NavBar: React.FC = () => {
             {/* <NavLink
               to="/favorites"
               className={({ isActive }) =>
-                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isActive ? "bg-gray-100 dark:bg-gray-700 dark:text-white" : ""
+                `inline-flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive ? "bg-muted text-foreground" : "text-foreground/80"
                 }`
               }
             >
               Favorites
               {favorites.length > 0 && (
-                <span className="ml-1 rounded-full bg-blue-500 px-2 py-0.5 text-xs text-white">
+                <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                   {favorites.length}
                 </span>
               )}

@@ -135,13 +135,15 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
               >
                 <motion.button
                   onClick={toggleFavorite}
-                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background shadow-md"
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.8 }}
                 >
                   <Heart
                     className={`h-5 w-5 ${
-                      false ? "fill-red-500 text-red-500" : "text-gray-400"
+                      false
+                        ? "fill-destructive text-destructive"
+                        : "text-muted-foreground"
                     }`}
                   />
                 </motion.button>
@@ -150,20 +152,20 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                   <>
                     <motion.button
                       onClick={prevImage}
-                      className="absolute left-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                      className="absolute left-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background shadow-md"
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.8 }}
                     >
-                      <ArrowLeft className="h-5 w-5 text-gray-700" />
+                      <ArrowLeft className="h-5 w-5 text-foreground" />
                     </motion.button>
 
                     <motion.button
                       onClick={nextImage}
-                      className="absolute right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white shadow-md"
+                      className="absolute right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background shadow-md"
                       whileHover={{ scale: 1.2 }}
                       whileTap={{ scale: 0.8 }}
                     >
-                      <ArrowRight className="h-5 w-5 text-gray-700" />
+                      <ArrowRight className="h-5 w-5 text-foreground" />
                     </motion.button>
                   </>
                 )}
@@ -202,12 +204,12 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                 </AnimatePresence>
               </div>
 
-              <div className="p-4 md:p-6 bg-white">
+              <div className="p-4 md:p-6 bg-card">
                 <div className="flex justify-between items-center mb-4">
-                  <h1 className="text-xl md:text-2xl font-bold capitalize">
+                  <h1 className="text-xl md:text-2xl font-bold capitalize text-card-foreground">
                     {details.name}
                   </h1>
-                  <span className="text-lg md:text-xl font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+                  <span className="text-lg md:text-xl font-bold px-3 py-1 rounded-full bg-muted text-muted-foreground">
                     #{details.id}
                   </span>
                 </div>
@@ -226,41 +228,41 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {details.description && (
-                  <p className="text-gray-700 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm md:text-base">
+                  <p className="text-card-foreground/90 mb-6 bg-muted/50 p-3 rounded-lg border border-border text-sm md:text-base">
                     {details.description}
                   </p>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                   <div>
-                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-gray-700">
+                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-card-foreground/90">
                       Height
                     </h3>
-                    <p className="text-base md:text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    <p className="text-base md:text-lg bg-muted/50 p-2 rounded-lg border border-border">
                       {details.height} m
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-gray-700">
+                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-card-foreground/90">
                       Weight
                     </h3>
-                    <p className="text-base md:text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    <p className="text-base md:text-lg bg-muted/50 p-2 rounded-lg border border-border">
                       {details.weight} kg
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-gray-700">
+                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-card-foreground/90">
                       Base Experience
                     </h3>
-                    <p className="text-base md:text-lg bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    <p className="text-base md:text-lg bg-muted/50 p-2 rounded-lg border border-border">
                       {details.base_experience}
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-gray-700">
+                    <h3 className="font-semibold mb-1 md:mb-2 text-sm md:text-base text-card-foreground/90">
                       Skills
                     </h3>
-                    <p className="text-base md:text-lg bg-gray-50 p-2 rounded-lg border border-gray-100 truncate">
+                    <p className="text-base md:text-lg bg-muted/50 p-2 rounded-lg border border-border truncate">
                       {details.abilities
                         ?.map((ability) => ability.ability.name)
                         .join(", ")}
@@ -271,24 +273,24 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Right side - Tabs */}
-            <div className="bg-gray-50 p-4 md:p-6">
+            <div className="bg-muted p-4 md:p-6">
               <Tabs defaultValue="movements">
                 <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-8">
                   <TabsTrigger
                     value="statistics"
-                    className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
+                    className="flex-1 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md transition-all duration-300"
                   >
                     Statistics
                   </TabsTrigger>
                   <TabsTrigger
                     value="movements"
-                    className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
+                    className="flex-1 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md transition-all duration-300"
                   >
                     Movements
                   </TabsTrigger>
                   <TabsTrigger
                     value="evolution"
-                    className="flex-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
+                    className="flex-1 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md transition-all duration-300"
                   >
                     Evolution
                   </TabsTrigger>
@@ -296,7 +298,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 
                 <TabsContent value="statistics">
                   <div className="space-y-4">
-                    <h2 className="text-lg md:text-xl font-bold mb-4">
+                    <h2 className="text-lg md:text-xl font-bold mb-4 text-foreground">
                       Statistics
                     </h2>
                     <div className="space-y-4 md:space-y-6">
@@ -308,14 +310,14 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                           transition={{ delay: index * 0.1, duration: 0.5 }}
                         >
                           <div className="flex justify-between mb-1 md:mb-2">
-                            <span className="text-xs md:text-sm font-medium capitalize">
+                            <span className="text-xs md:text-sm font-medium capitalize text-foreground/90">
                               {stat.stat.name.replace(/-/g, " ")}
                             </span>
-                            <span className="text-xs md:text-sm font-bold">
+                            <span className="text-xs md:text-sm font-bold text-foreground">
                               {stat.base_stat}
                             </span>
                           </div>
-                          <div className="relative h-2 md:h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+                          <div className="relative h-2 md:h-3 w-full bg-muted rounded-full overflow-hidden">
                             <motion.div
                               className={`absolute top-0 left-0 h-full rounded-full ${
                                 stat.base_stat < 50
@@ -339,7 +341,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 
                 <TabsContent value="movements">
                   <div>
-                    <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6">
+                    <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-foreground">
                       Movements
                     </h2>
 
@@ -360,7 +362,7 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                         </motion.div>
                       ))}
                     </div>
-                    <p className="text-sm text-gray-500 mt-4 text-center">
+                    <p className="text-sm text-muted-foreground mt-4 text-center">
                       Showing 20 of 86 moves
                     </p>
                   </div>
@@ -368,11 +370,11 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
 
                 <TabsContent value="evolution">
                   <div className="space-y-4">
-                    <h2 className="text-lg md:text-xl font-bold mb-4">
+                    <h2 className="text-lg md:text-xl font-bold mb-4 text-foreground">
                       Evolution
                     </h2>
                     {details.evolutions && details.evolutions.length === 0 ? (
-                      <p className="text-gray-600 mb-4">
+                      <p className="text-muted-foreground mb-4">
                         Evolution information not available in this version.
                       </p>
                     ) : (
@@ -392,11 +394,11 @@ const PokemonDetails: React.FC<PokemonDetailsProps> = ({ isOpen, onClose }) => {
                                       alt={evolution.name}
                                       className="h-16 w-16 md:h-24 md:w-24"
                                     />
-                                    <p className="text-center capitalize text-xs md:text-base">
+                                    <p className="text-center capitalize text-xs md:text-base text-foreground">
                                       {evolution.name}
                                     </p>
                                     {evolution.condition && (
-                                      <span className="text-[10px] md:text-xs text-gray-500">
+                                      <span className="text-[10px] md:text-xs text-muted-foreground">
                                         {evolution.condition}
                                       </span>
                                     )}
